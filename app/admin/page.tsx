@@ -60,10 +60,7 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold text-zinc-900">Administration</h1>
-      <p className="mb-8 text-sm text-zinc-500">
-        Gestion des utilisateurs et suivi des modifications. Réservé aux administrateurs.
-      </p>
+      <h1 className="mb-8 text-2xl font-bold text-zinc-900">Administration</h1>
 
       {error && (
         <div className="mb-6">
@@ -73,10 +70,6 @@ export default async function AdminPage() {
 
       <section className="mb-10">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900">Utilisateurs</h2>
-        <p className="mb-4 text-sm text-zinc-500">
-          Le premier compte créé devient admin automatiquement. Créez les comptes dans Supabase
-          Dashboard → Authentication → Users.
-        </p>
         <UsersManager profiles={profiles} currentUserId={admin.id} />
       </section>
 

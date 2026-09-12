@@ -23,27 +23,28 @@ export default async function DashboardPage() {
   const debutAnnee = `${anneeCourante}-01-01`;
   const finAnnee = `${anneeCourante}-12-31`;
 
-  const [facturesMoisRes, facturesAnneeRes, facturesHistoriqueRes, toutesFacturesRes] =
+  const cols = "date_emission, total_ht";
+  const [facturesMoisRes, facturesAnneeRes, facturesHistoriqueRes, countRes] =
     await Promise.all([
       supabase
         .from("factures")
-        .select("*")
+        .select(cols)
         .gte("date_emission", debutMois)
         .lte("date_emission", finMois),
       supabase
         .from("factures")
-        .select("*")
+        .select(cols)
         .gte("date_emission", debutAnnee)
         .lte("date_emission", finAnnee),
-      supabase.from("factures").select("*").gte("date_emission", "2023-01-01"),
-      supabase.from("factures").select("*"),
+      supabase.from("factures").select(cols).gte("date_emission", "2023-01-01"),
+      supabase.from("factures").select("*", { count: "exact", head: true }),
     ]);
 
   const error =
     facturesMoisRes.error ??
     facturesAnneeRes.error ??
     facturesHistoriqueRes.error ??
-    toutesFacturesRes.error;
+    countRes.error;
 
   if (error) {
     return (
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
   const factures = (facturesMoisRes.data ?? []) as Facture[];
   const facturesAnnee = (facturesAnneeRes.data ?? []) as Facture[];
   const facturesHistorique = (facturesHistoriqueRes.data ?? []) as Facture[];
-  const all = (toutesFacturesRes.data ?? []) as Facture[];
+  const totalFactures = countRes.count ?? 0;
 
   const nbFacturesMois = factures.length;
   const montantFactureMois = factures.reduce((s, f) => s + f.total_ht, 0);
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
     { label: "Factures ce mois-ci", value: String(nbFacturesMois) },
     { label: "Montant HT ce mois", value: formatMontant(montantFactureMois) },
     { label: `Montant HT ${anneeCourante}`, value: formatMontant(montantAnnee) },
-    { label: "Total factures", value: String(all.length) },
+    { label: "Total factures", value: String(totalFactures) },
   ];
 
   const quickLinks = [
@@ -81,11 +82,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold text-zinc-900">Tableau de bord</h1>
-      <p className="mb-8 text-sm text-zinc-500">
-        Vue d&apos;ensemble —{" "}
-        {now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
-      </p>
+      <h1 className="mb-8 text-2xl font-bold text-zinc-900">Tableau de bord</h1>
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

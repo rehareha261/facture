@@ -75,21 +75,6 @@ export function ImportProduitsModal({ open, onClose }: ImportProduitsModalProps)
           </Alert>
         )}
 
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
-          <p className="mb-2 font-medium text-zinc-800">Format attendu (CSV)</p>
-          <p>Colonnes : <strong>Libelle</strong>, <strong>PU</strong></p>
-          <p className="mt-1 text-xs">La TVA est celle configurée dans Mon entreprise.</p>
-          <p className="mt-2">Séparateur : point-virgule (;) ou virgule (,)</p>
-          <pre className="mt-3 overflow-x-auto rounded bg-white p-2 text-xs">
-{`Libelle;PU
-Whisky 70cl;85000
-Bière locale;3500`}
-          </pre>
-          <p className="mt-2 text-xs">
-            Astuce : exportez votre fichier Excel en CSV (UTF-8) avant import.
-          </p>
-        </div>
-
         <input
           ref={fileRef}
           type="file"

@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { calculerLigne } from "@/lib/facture-calculs";
 import { formatMontant } from "@/lib/format";
-import { MODELE_FACTURE } from "@/lib/facture-modele";
 import { AuditInfo } from "@/components/admin/AuditInfo";
 import type { AuditDisplay, FactureComplete } from "@/lib/types";
 
@@ -88,20 +87,7 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border border-zinc-200 bg-white p-5 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase text-zinc-500">Modèle facture</h2>
-          <p className="font-semibold text-zinc-900">{MODELE_FACTURE.nom}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.adresse}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.nifStat}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.activite}</p>
-          <p className="mt-2">
-            <span className="text-zinc-500">Doit : </span>
-            {MODELE_FACTURE.doit}
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-zinc-200 bg-white p-5">
+      <div className="rounded-lg border border-zinc-200 bg-white p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase text-zinc-500">Dates</h2>
           <p className="text-sm">
             <span className="text-zinc-500">Émission : </span>
@@ -119,7 +105,6 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
               {facture.mode_paiement}
             </p>
           )}
-        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200">

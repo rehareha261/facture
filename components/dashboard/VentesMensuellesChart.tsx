@@ -31,8 +31,6 @@ interface VentesMensuellesChartProps {
 }
 
 export function VentesMensuellesChart({ data }: VentesMensuellesChartProps) {
-  const [anN, anN1, anN2] = data.annees;
-
   const chartData = {
     labels: data.labels,
     datasets: data.series.map((s, i) => ({
@@ -49,12 +47,9 @@ export function VentesMensuellesChart({ data }: VentesMensuellesChartProps) {
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-5">
-      <h2 className="mb-1 text-lg font-semibold text-zinc-900">
-        Vente de boisson alcoolique par mois hors taxe
+      <h2 className="mb-4 text-lg font-semibold text-zinc-900">
+        Ventes mensuelles HT
       </h2>
-      <p className="mb-4 text-sm text-zinc-500">
-        Total HT facturé — comparaison {anN2}, {anN1} et {anN} (n)
-      </p>
       <div className="h-80 w-full">
         <Line
           data={chartData}

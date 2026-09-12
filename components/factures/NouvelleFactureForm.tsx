@@ -164,15 +164,6 @@ export function NouvelleFactureForm({
 
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900">Informations générales</h2>
-        <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm">
-          <p className="font-semibold text-zinc-900">{MODELE_FACTURE.nom}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.adresse}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.nifStat}</p>
-          <p className="text-zinc-600">{MODELE_FACTURE.activite}</p>
-          <p className="mt-2">
-            <span className="font-medium text-zinc-700">Doit :</span> {MODELE_FACTURE.doit}
-          </p>
-        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
@@ -344,7 +335,6 @@ export function NouvelleFactureForm({
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder={MODELE_FACTURE.modePaiementDefaut}
           />
-          <p className="mt-1 text-xs text-zinc-500">Affiché sur la facture PDF</p>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700">Notes (optionnel)</label>

@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { deleteFacture } from "@/lib/actions/factures";
-import { factureContientProduit } from "@/lib/facture-filtre-produit";
 import { formatMontant } from "@/lib/format";
 import type { FactureAvecLignes, Produit } from "@/lib/types";
 
@@ -29,32 +28,11 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
   const filtreDebut = searchParams.get("debut") ?? "";
   const filtreFin = searchParams.get("fin") ?? "";
 
-  const produitSelectionne = useMemo(
-    () => produits.find((p) => p.id === filtreProduit) ?? null,
-    [produits, filtreProduit]
-  );
-
-  const facturesFiltrees = useMemo(() => {
-    const qNumero = filtreNumero.trim().toLowerCase();
-    return factures.filter((f) => {
-      if (qNumero && !f.numero.toLowerCase().includes(qNumero)) return false;
-      if (filtreDebut && f.date_emission < filtreDebut) return false;
-      if (filtreFin && f.date_emission > filtreFin) return false;
-      if (
-        filtreProduit &&
-        produitSelectionne &&
-        !factureContientProduit(f, filtreProduit, produitSelectionne.designation)
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [factures, filtreNumero, filtreProduit, produitSelectionne, filtreDebut, filtreFin]);
-
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    params.delete("page");
     router.push(`/factures?${params.toString()}`);
   };
 
@@ -128,7 +106,7 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
         </div>
       )}
 
-      {facturesFiltrees.length === 0 ? (
+      {factures.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center text-zinc-500">
           Aucune facture trouvée.
         </div>
@@ -152,7 +130,7 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 bg-white">
-              {facturesFiltrees.map((facture) => (
+              {factures.map((facture) => (
                 <tr key={facture.id} className="hover:bg-zinc-50">
                   <td className="whitespace-nowrap px-4 py-3 text-sm font-medium">
                     <Link

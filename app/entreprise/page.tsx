@@ -30,19 +30,11 @@ export default async function EntreprisePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold text-zinc-900">Mon entreprise</h1>
-      <p className="mb-6 text-sm text-zinc-500">
-        Informations de RASOANIRIANA ODETTE (modèle de facture). Seul le taux de TVA est
-        utilisé pour les calculs ; le PDF reprend toujours cet en-tête et « Doit : Clients
-        divers ».
-      </p>
+      <h1 className="mb-6 text-2xl font-bold text-zinc-900">Mon entreprise</h1>
 
       {!entreprise && (
         <div className="mb-6">
-          <Alert variant="info">
-            Aucune information enregistrée. Remplissez le formulaire ci-dessous pour configurer
-            votre entreprise.
-          </Alert>
+          <Alert variant="info">Aucune information enregistrée.</Alert>
         </div>
       )}
 

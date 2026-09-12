@@ -50,9 +50,6 @@ export function CataloguePickerModal({
             onChange={(e) => setSearch(e.target.value)}
             className="mb-3 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
-          <p className="mb-2 text-xs text-zinc-500">
-            {produitsFiltres.length} / {produits.length} produits
-          </p>
           {produitsFiltres.length === 0 ? (
             <p className="py-6 text-center text-sm text-zinc-500">Aucun produit trouvé.</p>
           ) : (

@@ -51,7 +51,7 @@ export function DashboardVentesSection({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <label htmlFor="annee-ref" className="text-sm font-medium text-zinc-700">
-            Année de référence (n) :
+            Année :
           </label>
           <select
             id="annee-ref"
@@ -65,9 +65,6 @@ export function DashboardVentesSection({
               </option>
             ))}
           </select>
-          <span className="text-xs text-zinc-500">
-            Compare {anneeRef - 2}, {anneeRef - 1} et {anneeRef}
-          </span>
         </div>
         <button
           type="button"

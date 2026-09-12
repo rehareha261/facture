@@ -90,9 +90,6 @@ function ProduitFormBody({
         />
       </div>
 
-      <p className="text-xs text-zinc-500">
-        La TVA est unique pour toute l&apos;application — configurez-la dans Mon entreprise.
-      </p>
 
       <div className="flex justify-end gap-2 pt-2">
         <button

@@ -152,9 +152,6 @@ export function EntrepriseForm({ entreprise }: EntrepriseFormProps) {
             }
             className={inputClass}
           />
-          <p className="mt-1 text-xs text-zinc-500">
-            Taux unique appliqué à toutes les factures et produits.
-          </p>
         </div>
       </section>
 
