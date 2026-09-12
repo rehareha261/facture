@@ -7,9 +7,11 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** Modal plus large (catalogue produits, etc.) */
+  wide?: boolean;
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, children, wide }: ModalProps) {
   // Fermer avec la touche Échap
   useEffect(() => {
     if (!open) return;
@@ -33,7 +35,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative z-10 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+        className={`relative z-10 w-full rounded-xl bg-white p-6 shadow-xl ${wide ? "max-w-xl" : "max-w-lg"}`}
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="modal-title" className="text-lg font-semibold text-zinc-900">

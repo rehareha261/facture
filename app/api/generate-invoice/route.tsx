@@ -3,7 +3,7 @@ import { generatePdfBuffer } from "@/lib/generate-pdf-buffer";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
 import { createSupabaseAdmin } from "@/lib/supabase-admin";
-import type { Client, Entreprise, Facture, LigneFacture } from "@/lib/types";
+import type { Facture, LigneFacture } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const { data: facture, error: factureError } = await supabase
       .from("factures")
-      .select("*, clients(*), lignes_facture(*)")
+      .select("*, lignes_facture(*)")
       .eq("id", factureId)
       .single();
 
@@ -35,34 +35,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: entreprise, error: entrepriseError } = await supabase
-      .from("entreprise")
-      .select("*")
-      .limit(1)
-      .single();
-
-    if (entrepriseError || !entreprise) {
-      return NextResponse.json(
-        {
-          error:
-            getSupabaseErrorMessage(entrepriseError) ??
-            "Informations entreprise introuvables. Renseignez la table entreprise.",
-        },
-        { status: 500 }
-      );
-    }
-
-    const client = facture.clients as Client;
     const lignes = (facture.lignes_facture as LigneFacture[]).sort(
       (a, b) => a.ordre - b.ordre
     );
 
-    const pdfBuffer = await generatePdfBuffer(
-      entreprise as Entreprise,
-      client,
-      facture as Facture,
-      lignes
-    );
+    const pdfBuffer = await generatePdfBuffer(facture as Facture, lignes);
 
     const fileName = `${(facture.numero as string).replace(/\//g, "-")}.pdf`;
     const storagePath = `${factureId}/${fileName}`;

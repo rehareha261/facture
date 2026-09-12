@@ -1,152 +1,218 @@
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Image,
-} from "@react-pdf/renderer";
-import type { Client, Entreprise, Facture, LigneFacture } from "@/lib/types";
-import { DEVISE_SYMBOLE } from "@/lib/constants";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import type { Facture, LigneFacture } from "@/lib/types";
 import { arrondirMontant, calculerLigne } from "@/lib/facture-calculs";
+import { montantEnLettres } from "@/lib/nombre-en-lettres";
+import { formatNombre } from "@/lib/format";
+import { MODELE_FACTURE } from "@/lib/facture-modele";
+
+const BORDER = "#000000";
+const MIN_LIGNES = 10;
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica" },
-  header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 30 },
-  logo: { width: 80, height: 80, objectFit: "contain" },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 4 },
-  section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 11, fontWeight: "bold", marginBottom: 6, color: "#374151" },
-  row: { flexDirection: "row", marginBottom: 2 },
-  label: { width: 80, color: "#6b7280" },
-  table: { marginTop: 8 },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#f3f4f6",
-    padding: 6,
-    fontWeight: "bold",
+  page: {
+    padding: 28,
+    fontSize: 9,
+    fontFamily: "Helvetica",
+    color: "#000",
   },
-  tableRow: { flexDirection: "row", padding: 6, borderBottomWidth: 1, borderBottomColor: "#e5e7eb" },
-  colDesignation: { flex: 3 },
-  colQty: { flex: 0.6, textAlign: "right" },
-  colPrix: { flex: 1, textAlign: "right" },
-  colTva: { flex: 0.6, textAlign: "right" },
-  colTotal: { flex: 1, textAlign: "right" },
-  totals: { marginTop: 16, alignItems: "flex-end" },
-  totalRow: { flexDirection: "row", width: 200, justifyContent: "space-between", marginBottom: 4 },
-  totalTtc: { fontWeight: "bold", fontSize: 12, marginTop: 4 },
-  notes: { marginTop: 24, padding: 10, backgroundColor: "#f9fafb" },
-  footer: { position: "absolute", bottom: 30, left: 40, right: 40, textAlign: "center", color: "#9ca3af", fontSize: 8 },
+  topRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  companyBlock: { flex: 1, paddingRight: 12 },
+  companyName: { fontSize: 11, fontWeight: "bold", marginBottom: 2 },
+  companyLine: { fontSize: 9, marginBottom: 1 },
+  metaBlock: { width: 200 },
+  metaBox: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    flexDirection: "row",
+    marginBottom: 0,
+  },
+  metaLabel: {
+    width: 70,
+    borderRightWidth: 1,
+    borderRightColor: BORDER,
+    padding: 4,
+    fontWeight: "bold",
+    fontSize: 8,
+  },
+  metaValue: { flex: 1, padding: 4, fontSize: 9 },
+  doitBlock: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderTopWidth: 0,
+    padding: 4,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  doitLabel: { fontWeight: "bold", marginRight: 4 },
+  cell: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 4,
+    fontSize: 9,
+  },
+  tableRow: { flexDirection: "row" },
+  headerCell: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 4,
+    fontSize: 9,
+    fontWeight: "bold",
+    backgroundColor: "#e8e8e8",
+    textAlign: "center",
+  },
+  colQte: { width: "12%" },
+  colLibelle: { width: "48%" },
+  colPu: { width: "18%" },
+  colMontant: { width: "22%", textAlign: "right" },
+  totalLabel: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 4,
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  footerLine: { marginTop: 10, fontSize: 9 },
+  signatures: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 36,
+    paddingHorizontal: 40,
+  },
+  signatureLabel: { fontSize: 9, fontWeight: "bold" },
 });
-
-function fmt(n: number): string {
-  return `${n.toLocaleString("fr-MG")} ${DEVISE_SYMBOLE}`;
-}
 
 function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString("fr-FR");
 }
 
+function tauxTvaLabel(lignes: LigneFacture[]): string {
+  const taux = [...new Set(lignes.map((l) => l.taux_tva))];
+  if (taux.length === 1) return `TVA ${taux[0]} %`;
+  return "TVA";
+}
+
 export interface InvoicePdfProps {
-  entreprise: Entreprise;
-  client: Client;
   facture: Facture;
   lignes: LigneFacture[];
 }
 
-export function InvoicePdfDocument({ entreprise, client, facture, lignes }: InvoicePdfProps) {
+export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
+  const sorted = [...lignes].sort((a, b) => a.ordre - b.ordre);
+  const padded: (LigneFacture | null)[] = [...sorted];
+  while (padded.length < MIN_LIGNES) padded.push(null);
+
+  const modePaiement = facture.mode_paiement ?? MODELE_FACTURE.modePaiementDefaut;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View>
-            {entreprise.logo_url ? (
-              // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image
-              <Image src={entreprise.logo_url} style={styles.logo} />
-            ) : null}
-            <Text style={{ fontWeight: "bold", fontSize: 14 }}>{entreprise.nom}</Text>
-            {entreprise.adresse ? <Text>{entreprise.adresse}</Text> : null}
-            {entreprise.telephone ? <Text>Tél : {entreprise.telephone}</Text> : null}
-            {entreprise.email ? <Text>{entreprise.email}</Text> : null}
-            {/* NIF et STAT entreprise : toujours affichés s'ils existent */}
-            {entreprise.nif ? <Text>NIF : {entreprise.nif}</Text> : null}
-            {entreprise.stat ? <Text>STAT : {entreprise.stat}</Text> : null}
-            {entreprise.numero_rcs ? <Text>RCS : {entreprise.numero_rcs}</Text> : null}
-            {entreprise.numero_tva ? <Text>N° TVA : {entreprise.numero_tva}</Text> : null}
-            {entreprise.iban ? <Text>IBAN : {entreprise.iban}</Text> : null}
+        <View style={styles.topRow}>
+          <View style={styles.companyBlock}>
+            <Text style={styles.companyName}>{MODELE_FACTURE.nom}</Text>
+            <Text style={styles.companyLine}>{MODELE_FACTURE.adresse}</Text>
+            <Text style={styles.companyLine}>{MODELE_FACTURE.nifStat}</Text>
+            <Text style={styles.companyLine}>{MODELE_FACTURE.activite}</Text>
           </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.title}>FACTURE</Text>
-            <Text>N° {facture.numero}</Text>
-            <Text>Date : {fmtDate(facture.date_emission)}</Text>
-            {facture.date_echeance ? (
-              <Text>Échéance : {fmtDate(facture.date_echeance)}</Text>
-            ) : null}
+
+          <View style={styles.metaBlock}>
+            <View style={styles.metaBox}>
+              <Text style={styles.metaLabel}>Date :</Text>
+              <Text style={styles.metaValue}>{fmtDate(facture.date_emission)}</Text>
+            </View>
+            <View style={[styles.metaBox, { borderTopWidth: 0 }]}>
+              <Text style={styles.metaLabel}>NUM FACT :</Text>
+              <Text style={styles.metaValue}>{facture.numero}</Text>
+            </View>
+            <View style={styles.doitBlock}>
+              <Text style={styles.doitLabel}>Doit :</Text>
+              <Text>{MODELE_FACTURE.doit}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Client</Text>
-          <Text style={{ fontWeight: "bold" }}>{client.nom}</Text>
-          {client.adresse ? <Text>{client.adresse}</Text> : null}
-          {client.email ? <Text>{client.email}</Text> : null}
-          {client.telephone ? <Text>{client.telephone}</Text> : null}
-          {/* NIF/STAT client : uniquement si renseignés (client pro) */}
-          {client.nif ? <Text>NIF : {client.nif}</Text> : null}
-          {client.stat ? <Text>STAT : {client.stat}</Text> : null}
-        </View>
-
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.colDesignation}>Désignation</Text>
-            <Text style={styles.colQty}>Qté</Text>
-            <Text style={styles.colPrix}>Prix HT</Text>
-            <Text style={styles.colTva}>TVA</Text>
-            <Text style={styles.colTotal}>Total TTC</Text>
+        <View style={{ marginTop: 6 }}>
+          <View style={styles.tableRow}>
+            <Text style={[styles.headerCell, styles.colQte]}>Qte</Text>
+            <Text style={[styles.headerCell, styles.colLibelle]}>Libelle</Text>
+            <Text style={[styles.headerCell, styles.colPu]}>PU</Text>
+            <Text style={[styles.headerCell, styles.colMontant]}>Montant</Text>
           </View>
-          {lignes
-            .sort((a, b) => a.ordre - b.ordre)
-            .map((ligne) => {
-              const { ttc } = calculerLigne(
-                ligne.quantite,
-                ligne.prix_unitaire_ht,
-                ligne.taux_tva
-              );
+
+          {padded.map((ligne, i) => {
+            if (!ligne) {
               return (
-                <View key={ligne.id} style={styles.tableRow}>
-                  <Text style={styles.colDesignation}>{ligne.designation}</Text>
-                  <Text style={styles.colQty}>{ligne.quantite}</Text>
-                  <Text style={styles.colPrix}>{fmt(ligne.prix_unitaire_ht)}</Text>
-                  <Text style={styles.colTva}>{ligne.taux_tva} %</Text>
-                  <Text style={styles.colTotal}>{fmt(arrondirMontant(ttc))}</Text>
+                <View key={`empty-${i}`} style={styles.tableRow}>
+                  <Text style={[styles.cell, styles.colQte]}> </Text>
+                  <Text style={[styles.cell, styles.colLibelle]}> </Text>
+                  <Text style={[styles.cell, styles.colPu]}> </Text>
+                  <Text style={[styles.cell, styles.colMontant]}> </Text>
                 </View>
               );
-            })}
+            }
+            const { ht } = calculerLigne(
+              ligne.quantite,
+              ligne.prix_unitaire_ht,
+              ligne.taux_tva
+            );
+            return (
+              <View key={ligne.id} style={styles.tableRow}>
+                <Text style={[styles.cell, styles.colQte, { textAlign: "center" }]}>
+                  {ligne.quantite}
+                </Text>
+                <Text style={[styles.cell, styles.colLibelle]}>{ligne.designation}</Text>
+                <Text style={[styles.cell, styles.colPu, { textAlign: "right" }]}>
+                  {formatNombre(ligne.prix_unitaire_ht)}
+                </Text>
+                <Text style={[styles.cell, styles.colMontant]}>
+                  {formatNombre(arrondirMontant(ht))}
+                </Text>
+              </View>
+            );
+          })}
+
+          <View style={styles.tableRow}>
+            <Text style={[styles.cell, styles.colQte]}> </Text>
+            <Text style={[styles.totalLabel, styles.colLibelle]}>TOTAL HT</Text>
+            <Text style={[styles.cell, styles.colPu]}> </Text>
+            <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
+              {formatNombre(facture.total_ht)}
+            </Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={[styles.cell, styles.colQte]}> </Text>
+            <Text style={[styles.totalLabel, styles.colLibelle]}>{tauxTvaLabel(sorted)}</Text>
+            <Text style={[styles.cell, styles.colPu]}> </Text>
+            <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
+              {formatNombre(facture.total_tva)}
+            </Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={[styles.cell, styles.colQte]}> </Text>
+            <Text style={[styles.totalLabel, styles.colLibelle]}>TOTAL TTC</Text>
+            <Text style={[styles.cell, styles.colPu]}> </Text>
+            <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
+              {formatNombre(facture.total_ttc)}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.totals}>
-          <View style={styles.totalRow}>
-            <Text>Total HT</Text>
-            <Text>{fmt(facture.total_ht)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text>Total TVA</Text>
-            <Text>{fmt(facture.total_tva)}</Text>
-          </View>
-          <View style={[styles.totalRow, styles.totalTtc]}>
-            <Text>Total TTC</Text>
-            <Text>{fmt(facture.total_ttc)}</Text>
-          </View>
-        </View>
+        <Text style={styles.footerLine}>
+          Arrêté à la somme de : {montantEnLettres(facture.total_ttc)}
+        </Text>
+        <Text style={styles.footerLine}>Mode paiement : {modePaiement}</Text>
 
         {facture.notes ? (
-          <View style={styles.notes}>
-            <Text style={{ fontWeight: "bold", marginBottom: 4 }}>Notes</Text>
-            <Text>{facture.notes}</Text>
-          </View>
+          <Text style={[styles.footerLine, { marginTop: 6 }]}>{facture.notes}</Text>
         ) : null}
 
-        <Text style={styles.footer}>{entreprise.nom} — Facture {facture.numero}</Text>
+        <View style={styles.signatures}>
+          <Text style={styles.signatureLabel}>Client</Text>
+          <Text style={styles.signatureLabel}>Fournisseur</Text>
+        </View>
       </Page>
     </Document>
   );

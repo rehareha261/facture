@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
+import { ImportProduitsModal } from "@/components/produits/ImportProduitsModal";
 import { ProduitFormModal } from "@/components/produits/ProduitFormModal";
 import { deleteProduit } from "@/lib/actions/produits";
+import { filtrerProduits } from "@/lib/filtre-produits";
 import { formatMontant } from "@/lib/format";
 import type { Produit } from "@/lib/types";
 
@@ -14,10 +16,17 @@ interface ProduitsManagerProps {
 
 export function ProduitsManager({ produits }: ProduitsManagerProps) {
   const router = useRouter();
+  const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingProduit, setEditingProduit] = useState<Produit | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const produitsFiltres = useMemo(
+    () => filtrerProduits(produits, search),
+    [produits, search]
+  );
 
   const handleDelete = async (produit: Produit) => {
     const confirmed = window.confirm(
@@ -39,21 +48,40 @@ export function ProduitsManager({ produits }: ProduitsManagerProps) {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-500">
-          {produits.length} produit{produits.length !== 1 ? "s" : ""}
+          {produitsFiltres.length} / {produits.length} produit{produits.length !== 1 ? "s" : ""}
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            setEditingProduit(null);
-            setFormOpen(true);
-          }}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Nouveau produit
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Importer CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingProduit(null);
+              setFormOpen(true);
+            }}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + Nouveau produit
+          </button>
+        </div>
       </div>
+
+      {produits.length > 0 && (
+        <input
+          type="search"
+          placeholder="Rechercher un produit…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mb-4 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:max-w-md"
+        />
+      )}
 
       {deleteError && (
         <div className="mb-4">
@@ -64,6 +92,10 @@ export function ProduitsManager({ produits }: ProduitsManagerProps) {
       {produits.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center">
           <p className="text-zinc-500">Aucun produit dans le catalogue.</p>
+        </div>
+      ) : produitsFiltres.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center">
+          <p className="text-zinc-500">Aucun produit ne correspond à votre recherche.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-200">
@@ -77,24 +109,18 @@ export function ProduitsManager({ produits }: ProduitsManagerProps) {
                   Prix HT
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  TVA
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 bg-white">
-              {produits.map((produit) => (
+              {produitsFiltres.map((produit) => (
                 <tr key={produit.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3 text-sm font-medium text-zinc-900">
                     {produit.designation}
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-zinc-600">
                     {formatMontant(produit.prix_unitaire_ht)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-zinc-600">
-                    {produit.taux_tva} %
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
                     <button
@@ -131,6 +157,8 @@ export function ProduitsManager({ produits }: ProduitsManagerProps) {
         }}
         produit={editingProduit}
       />
+
+      <ImportProduitsModal open={importOpen} onClose={() => setImportOpen(false)} />
     </>
   );
 }

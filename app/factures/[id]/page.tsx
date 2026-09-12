@@ -24,7 +24,7 @@ export default async function FactureDetailPage({ params }: PageProps<"/factures
 
   const { data, error } = await supabase
     .from("factures")
-    .select("*, clients(*), lignes_facture(*)")
+    .select("*, lignes_facture(*)")
     .eq("id", id)
     .single();
 

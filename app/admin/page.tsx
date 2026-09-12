@@ -13,10 +13,9 @@ export const dynamic = "force-dynamic";
 async function getRecentActivity(): Promise<SuiviItem[]> {
   const supabase = await createClient();
 
-  const [factures, clients, produits] = await Promise.all([
+  const [factures, produits] = await Promise.all([
     supabase.from("factures").select("*").order("updated_at", { ascending: false }).limit(10),
-    supabase.from("clients").select("*").order("updated_at", { ascending: false }).limit(5),
-    supabase.from("produits").select("*").order("updated_at", { ascending: false }).limit(5),
+    supabase.from("produits").select("*").order("updated_at", { ascending: false }).limit(10),
   ]);
 
   const records: { type: string; label: string; href: string; record: AuditFields }[] = [];
@@ -27,14 +26,6 @@ async function getRecentActivity(): Promise<SuiviItem[]> {
       label: f.numero,
       href: `/factures/${f.id}`,
       record: f as AuditFields,
-    });
-  }
-  for (const c of clients.data ?? []) {
-    records.push({
-      type: "Client",
-      label: c.nom,
-      href: "/clients",
-      record: c as AuditFields,
     });
   }
   for (const p of produits.data ?? []) {

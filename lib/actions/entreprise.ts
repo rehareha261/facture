@@ -12,12 +12,8 @@ function toPayload(data: EntrepriseFormData) {
     adresse: data.adresse.trim() || null,
     nif: data.nif.trim() || null,
     stat: data.stat.trim() || null,
-    numero_rcs: data.numero_rcs.trim() || null,
-    numero_tva: data.numero_tva.trim() || null,
-    telephone: data.telephone.trim() || null,
-    email: data.email.trim() || null,
-    logo_url: data.logo_url.trim() || null,
-    iban: data.iban.trim() || null,
+    activite: data.activite.trim() || null,
+    taux_tva: data.taux_tva,
   };
 }
 
@@ -38,6 +34,9 @@ export async function saveEntreprise(
 ): Promise<ActionResult> {
   if (!data.nom.trim()) {
     return { success: false, error: "Le nom de l'entreprise est obligatoire." };
+  }
+  if (data.taux_tva < 0 || data.taux_tva > 100) {
+    return { success: false, error: "Le taux de TVA doit être entre 0 et 100." };
   }
 
   const supabase = await createSupabaseClient();

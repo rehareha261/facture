@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { StatutBadge } from "@/components/factures/StatutBadge";
-import { FactureStatutSelect } from "@/components/factures/FactureStatutSelect";
 import { calculerLigne } from "@/lib/facture-calculs";
 import { formatMontant } from "@/lib/format";
+import { MODELE_FACTURE } from "@/lib/facture-modele";
 import { AuditInfo } from "@/components/admin/AuditInfo";
 import type { AuditDisplay, FactureComplete } from "@/lib/types";
 
@@ -25,7 +24,6 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  const client = facture.clients;
   const lignes = [...facture.lignes_facture].sort((a, b) => a.ordre - b.ordre);
 
   const handleRegeneratePdf = async () => {
@@ -64,10 +62,9 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Facture {facture.numero}</h1>
-          <div className="mt-2 flex items-center gap-3">
-            <StatutBadge facture={facture} />
-            <FactureStatutSelect factureId={facture.id} statut={facture.statut} />
-          </div>
+          <p className="mt-1 text-sm text-zinc-500">
+            Émise le {fmtDate(facture.date_emission)}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {facture.pdf_url && (
@@ -92,20 +89,16 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border border-zinc-200 bg-white p-5">
-          <h2 className="mb-3 text-sm font-semibold uppercase text-zinc-500">Client</h2>
-          {client ? (
-            <>
-              <p className="font-medium text-zinc-900">{client.nom}</p>
-              {client.adresse && <p className="text-sm text-zinc-600">{client.adresse}</p>}
-              {client.email && <p className="text-sm text-zinc-600">{client.email}</p>}
-              {client.telephone && <p className="text-sm text-zinc-600">{client.telephone}</p>}
-              {client.nif && <p className="text-sm text-zinc-600">NIF : {client.nif}</p>}
-              {client.stat && <p className="text-sm text-zinc-600">STAT : {client.stat}</p>}
-            </>
-          ) : (
-            <p className="text-zinc-500">Client introuvable</p>
-          )}
+        <div className="rounded-lg border border-zinc-200 bg-white p-5 text-sm">
+          <h2 className="mb-3 text-sm font-semibold uppercase text-zinc-500">Modèle facture</h2>
+          <p className="font-semibold text-zinc-900">{MODELE_FACTURE.nom}</p>
+          <p className="text-zinc-600">{MODELE_FACTURE.adresse}</p>
+          <p className="text-zinc-600">{MODELE_FACTURE.nifStat}</p>
+          <p className="text-zinc-600">{MODELE_FACTURE.activite}</p>
+          <p className="mt-2">
+            <span className="text-zinc-500">Doit : </span>
+            {MODELE_FACTURE.doit}
+          </p>
         </div>
 
         <div className="rounded-lg border border-zinc-200 bg-white p-5">
@@ -118,6 +111,12 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
             <p className="text-sm">
               <span className="text-zinc-500">Échéance : </span>
               {fmtDate(facture.date_echeance)}
+            </p>
+          )}
+          {facture.mode_paiement && (
+            <p className="mt-2 text-sm">
+              <span className="text-zinc-500">Mode paiement : </span>
+              {facture.mode_paiement}
             </p>
           )}
         </div>
@@ -137,16 +136,13 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
                 Prix HT
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase text-zinc-500">
-                TVA
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-zinc-500">
-                Total TTC
+                Montant
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 bg-white">
             {lignes.map((ligne) => {
-              const { ttc } = calculerLigne(
+              const { ht } = calculerLigne(
                 ligne.quantite,
                 ligne.prix_unitaire_ht,
                 ligne.taux_tva
@@ -158,9 +154,8 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
                   <td className="px-4 py-3 text-right text-sm">
                     {formatMontant(ligne.prix_unitaire_ht)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm">{ligne.taux_tva} %</td>
                   <td className="px-4 py-3 text-right text-sm font-medium">
-                    {formatMontant(ttc)}
+                    {formatMontant(ht)}
                   </td>
                 </tr>
               );
@@ -175,7 +170,8 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
             Total HT : <strong>{formatMontant(facture.total_ht)}</strong>
           </p>
           <p>
-            Total TVA : <strong>{formatMontant(facture.total_tva)}</strong>
+            TVA {lignes[0]?.taux_tva ?? 20} % :{" "}
+            <strong>{formatMontant(facture.total_tva)}</strong>
           </p>
           <p className="text-lg">
             Total TTC : <strong>{formatMontant(facture.total_ttc)}</strong>

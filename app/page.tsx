@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { DashboardVentesSection } from "@/components/dashboard/DashboardVentesSection";
 import { Alert } from "@/components/ui/Alert";
-import { getStatutEffectif } from "@/lib/facture-statut";
 import { formatMontant } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
@@ -11,74 +12,68 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const now = new Date();
+  const anneeCourante = now.getFullYear();
+
   const debutMois = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString()
     .split("T")[0];
   const finMois = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     .toISOString()
     .split("T")[0];
+  const debutAnnee = `${anneeCourante}-01-01`;
+  const finAnnee = `${anneeCourante}-12-31`;
 
-  const { data: facturesMois, error } = await supabase
-    .from("factures")
-    .select("*")
-    .gte("date_emission", debutMois)
-    .lte("date_emission", finMois);
+  const [facturesMoisRes, facturesAnneeRes, facturesHistoriqueRes, toutesFacturesRes] =
+    await Promise.all([
+      supabase
+        .from("factures")
+        .select("*")
+        .gte("date_emission", debutMois)
+        .lte("date_emission", finMois),
+      supabase
+        .from("factures")
+        .select("*")
+        .gte("date_emission", debutAnnee)
+        .lte("date_emission", finAnnee),
+      supabase.from("factures").select("*").gte("date_emission", "2023-01-01"),
+      supabase.from("factures").select("*"),
+    ]);
 
-  const { data: toutesFactures, error: errorAll } = await supabase
-    .from("factures")
-    .select("*");
+  const error =
+    facturesMoisRes.error ??
+    facturesAnneeRes.error ??
+    facturesHistoriqueRes.error ??
+    toutesFacturesRes.error;
 
-  if (error || errorAll) {
+  if (error) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Tableau de bord</h1>
         <Alert variant="error">
-          Impossible de charger les statistiques :{" "}
-          {getSupabaseErrorMessage(error ?? errorAll)}
+          Impossible de charger les statistiques : {getSupabaseErrorMessage(error)}
         </Alert>
       </div>
     );
   }
 
-  const factures = (facturesMois ?? []) as Facture[];
-  const all = (toutesFactures ?? []) as Facture[];
+  const factures = (facturesMoisRes.data ?? []) as Facture[];
+  const facturesAnnee = (facturesAnneeRes.data ?? []) as Facture[];
+  const facturesHistorique = (facturesHistoriqueRes.data ?? []) as Facture[];
+  const all = (toutesFacturesRes.data ?? []) as Facture[];
 
   const nbFacturesMois = factures.length;
-  const montantFactureMois = factures.reduce((s, f) => s + f.total_ttc, 0);
-
-  // Factures envoyées non payées (montant en attente)
-  const enAttente = all.filter(
-    (f) => f.statut === "envoyee" || getStatutEffectif(f) === "en_retard"
-  );
-  const montantEnAttente = enAttente.reduce((s, f) => s + f.total_ttc, 0);
-
-  // Factures en retard (calcul à l'affichage)
-  const nbEnRetard = all.filter((f) => getStatutEffectif(f) === "en_retard").length;
+  const montantFactureMois = factures.reduce((s, f) => s + f.total_ht, 0);
+  const montantAnnee = facturesAnnee.reduce((s, f) => s + f.total_ht, 0);
 
   const stats = [
-    {
-      label: "Factures ce mois-ci",
-      value: String(nbFacturesMois),
-    },
-    {
-      label: "Montant facturé ce mois",
-      value: formatMontant(montantFactureMois),
-    },
-    {
-      label: "En attente de paiement",
-      value: formatMontant(montantEnAttente),
-      sub: `${enAttente.length} facture(s)`,
-    },
-    {
-      label: "Factures en retard",
-      value: String(nbEnRetard),
-      highlight: nbEnRetard > 0,
-    },
+    { label: "Factures ce mois-ci", value: String(nbFacturesMois) },
+    { label: "Montant HT ce mois", value: formatMontant(montantFactureMois) },
+    { label: `Montant HT ${anneeCourante}`, value: formatMontant(montantAnnee) },
+    { label: "Total factures", value: String(all.length) },
   ];
 
   const quickLinks = [
     { href: "/factures/nouvelle", label: "Nouvelle facture", primary: true },
-    { href: "/clients", label: "Clients" },
     { href: "/produits", label: "Produits" },
     { href: "/factures", label: "Toutes les factures" },
     { href: "/entreprise", label: "Mon entreprise" },
@@ -94,23 +89,20 @@ export default async function DashboardPage() {
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className={`rounded-xl border bg-white p-5 ${
-              stat.highlight ? "border-red-200 bg-red-50" : "border-zinc-200"
-            }`}
-          >
+          <div key={stat.label} className="rounded-xl border border-zinc-200 bg-white p-5">
             <p className="text-sm text-zinc-500">{stat.label}</p>
-            <p
-              className={`mt-1 text-2xl font-bold ${
-                stat.highlight ? "text-red-700" : "text-zinc-900"
-              }`}
-            >
-              {stat.value}
-            </p>
-            {stat.sub && <p className="mt-1 text-xs text-zinc-400">{stat.sub}</p>}
+            <p className="mt-1 text-2xl font-bold text-zinc-900">{stat.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mb-10">
+        <Suspense fallback={<p className="text-zinc-500">Chargement du graphique…</p>}>
+          <DashboardVentesSection
+            factures={facturesHistorique}
+            anneeDefaut={anneeCourante}
+          />
+        </Suspense>
       </div>
 
       <h2 className="mb-4 text-lg font-semibold text-zinc-900">Accès rapide</h2>

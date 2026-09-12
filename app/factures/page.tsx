@@ -4,19 +4,19 @@ import { FacturesList } from "@/components/factures/FacturesList";
 import { Alert } from "@/components/ui/Alert";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import type { Client, FactureAvecClient } from "@/lib/types";
+import type { FactureAvecLignes, Produit } from "@/lib/types";
 
 export const metadata = { title: "Factures — Facturation" };
 export const dynamic = "force-dynamic";
 
 export default async function FacturesPage() {
   const supabase = await createClient();
-  const [facturesRes, clientsRes] = await Promise.all([
+  const [facturesRes, produitsRes] = await Promise.all([
     supabase
       .from("factures")
-      .select("*, clients(nom)")
+      .select("*, lignes_facture(produit_id, designation)")
       .order("date_emission", { ascending: false }),
-    supabase.from("clients").select("id, nom").order("nom"),
+    supabase.from("produits").select("id, designation").order("designation"),
   ]);
 
   if (facturesRes.error) {
@@ -47,8 +47,8 @@ export default async function FacturesPage() {
 
       <Suspense fallback={<p className="text-zinc-500">Chargement…</p>}>
         <FacturesList
-          factures={(facturesRes.data ?? []) as FactureAvecClient[]}
-          clients={(clientsRes.data ?? []) as Pick<Client, "id" | "nom">[]}
+          factures={(facturesRes.data ?? []) as FactureAvecLignes[]}
+          produits={(produitsRes.data ?? []) as Pick<Produit, "id" | "designation">[]}
         />
       </Suspense>
     </div>

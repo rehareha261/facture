@@ -16,7 +16,6 @@ interface ProduitFormModalProps {
 const emptyForm: ProduitFormData = {
   designation: "",
   prix_unitaire_ht: 0,
-  taux_tva: 20,
 };
 
 function ProduitFormBody({
@@ -30,11 +29,7 @@ function ProduitFormBody({
   const isEditing = !!produit;
   const [form, setForm] = useState<ProduitFormData>(() =>
     produit
-      ? {
-          designation: produit.designation,
-          prix_unitaire_ht: produit.prix_unitaire_ht,
-          taux_tva: produit.taux_tva,
-        }
+      ? { designation: produit.designation, prix_unitaire_ht: produit.prix_unitaire_ht }
       : emptyForm
   );
   const [error, setError] = useState<string | null>(null);
@@ -77,47 +72,26 @@ function ProduitFormBody({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="prix" className="mb-1 block text-sm font-medium text-zinc-700">
-            Prix unitaire HT <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="prix"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            value={form.prix_unitaire_ht}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, prix_unitaire_ht: parseFloat(e.target.value) || 0 }))
-            }
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label htmlFor="tva" className="mb-1 block text-sm font-medium text-zinc-700">
-            Taux TVA (%) <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="tva"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            required
-            value={form.taux_tva}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, taux_tva: parseFloat(e.target.value) || 0 }))
-            }
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+      <div>
+        <label htmlFor="prix" className="mb-1 block text-sm font-medium text-zinc-700">
+          Prix unitaire HT <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="prix"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          value={form.prix_unitaire_ht}
+          onChange={(e) =>
+            setForm((p) => ({ ...p, prix_unitaire_ht: parseFloat(e.target.value) || 0 }))
+          }
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
       </div>
 
       <p className="text-xs text-zinc-500">
-        Ce produit sert de modèle pré-rempli lors de la création de factures. Les factures déjà
-        émises ne sont jamais modifiées si vous changez ce prix.
+        La TVA est unique pour toute l&apos;application — configurez-la dans Mon entreprise.
       </p>
 
       <div className="flex justify-end gap-2 pt-2">

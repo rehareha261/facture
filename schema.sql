@@ -16,12 +16,8 @@ CREATE TABLE IF NOT EXISTS entreprise (
   adresse       TEXT,
   nif           TEXT,
   stat          TEXT,
-  numero_rcs    TEXT,
-  numero_tva    TEXT,
-  telephone     TEXT,
-  email         TEXT,
-  logo_url      TEXT,
-  iban          TEXT,
+  activite      TEXT,
+  taux_tva      NUMERIC(5, 2) NOT NULL DEFAULT 20 CHECK (taux_tva >= 0 AND taux_tva <= 100),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -57,7 +53,7 @@ CREATE TABLE IF NOT EXISTS produits (
 CREATE TABLE IF NOT EXISTS factures (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   numero          TEXT NOT NULL UNIQUE,
-  client_id       UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+  client_id       UUID REFERENCES clients(id) ON DELETE SET NULL,
   date_emission   DATE NOT NULL DEFAULT CURRENT_DATE,
   date_echeance   DATE,
   statut          TEXT NOT NULL DEFAULT 'brouillon'
@@ -67,6 +63,7 @@ CREATE TABLE IF NOT EXISTS factures (
   total_ttc       NUMERIC(12, 2) NOT NULL DEFAULT 0,
   notes           TEXT,
   pdf_url         TEXT,
+  mode_paiement   TEXT DEFAULT 'AU COMPTANT',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -124,14 +121,14 @@ $$;
 -- ------------------------------------------------------------
 -- Donnée entreprise par défaut (à adapter)
 -- ------------------------------------------------------------
-INSERT INTO entreprise (nom, adresse, nif, stat, telephone, email)
+INSERT INTO entreprise (nom, adresse, nif, stat, activite, taux_tva)
 SELECT
-  'Mon Entreprise',
-  'Antananarivo, Madagascar',
-  '0000000000',
-  '000000000',
-  '+261 00 00 000 00',
-  'contact@entreprise.mg'
+  'RASOANIRIANA ODETTE',
+  'LOT IVI 129 TER ANTANETY AVARATRA',
+  '2003020187',
+  '46305 11 2018 0 03060',
+  'Vente en gros de boissons alcooliques',
+  20
 WHERE NOT EXISTS (SELECT 1 FROM entreprise);
 
 -- ------------------------------------------------------------
