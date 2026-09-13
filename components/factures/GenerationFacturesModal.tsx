@@ -143,8 +143,10 @@ export function GenerationFacturesModal({
   };
 
   const anneesOptions = useMemo(() => {
-    const y = now.getFullYear();
-    return [y - 2, y - 1, y, y + 1];
+    const anneeCourante = now.getFullYear();
+    const list: number[] = [];
+    for (let y = anneeCourante; y >= 2000; y--) list.push(y);
+    return list;
   }, [now]);
 
   return (
