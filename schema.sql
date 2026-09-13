@@ -50,7 +50,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ------------------------------------------------------------
--- Entreprise (une seule ligne)
+-- Entreprises (plusieurs enregistrements)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS entreprise (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS produits (
 CREATE TABLE IF NOT EXISTS factures (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   numero          TEXT NOT NULL UNIQUE,
+  entreprise_id   UUID REFERENCES entreprise(id) ON DELETE SET NULL,
   client_id       UUID REFERENCES clients(id) ON DELETE SET NULL,
   date_emission   DATE NOT NULL DEFAULT CURRENT_DATE,
   date_echeance   DATE,
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS factures (
   updated_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_factures_entreprise_id ON factures(entreprise_id);
 CREATE INDEX IF NOT EXISTS idx_factures_client_id ON factures(client_id);
 CREATE INDEX IF NOT EXISTS idx_factures_date_emission ON factures(date_emission DESC);
 CREATE INDEX IF NOT EXISTS idx_factures_numero ON factures(numero);

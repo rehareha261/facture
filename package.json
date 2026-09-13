@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:ventes": "tsx scripts/seed-factures-ventes.mts",
+    "seed:ventes:clean": "tsx scripts/seed-factures-ventes.mts --clean",
+    "verify:ventes": "tsx scripts/verify-lignes-ventes.mts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",
@@ -27,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.20.5",
     "typescript": "^5"
   }
 }

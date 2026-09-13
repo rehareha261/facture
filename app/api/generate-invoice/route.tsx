@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generatePdfBuffer } from "@/lib/generate-pdf-buffer";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import type { Facture, LigneFacture } from "@/lib/types";
+import type { Entreprise, Facture, LigneFacture } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +38,31 @@ export async function POST(request: NextRequest) {
       (a, b) => a.ordre - b.ordre
     );
 
-    const pdfBuffer = await generatePdfBuffer(facture as Facture, lignes);
+    if (!facture.entreprise_id) {
+      return NextResponse.json(
+        { error: "Cette facture n'est liée à aucune entreprise." },
+        { status: 400 }
+      );
+    }
+
+    const { data: entreprise, error: entError } = await supabase
+      .from("entreprise")
+      .select("*")
+      .eq("id", facture.entreprise_id)
+      .single();
+
+    if (entError || !entreprise) {
+      return NextResponse.json(
+        { error: "Entreprise introuvable pour cette facture." },
+        { status: 404 }
+      );
+    }
+
+    const pdfBuffer = await generatePdfBuffer(
+      facture as Facture,
+      lignes,
+      entreprise as Entreprise
+    );
     const fileName = `${(facture.numero as string).replace(/\//g, "-")}.pdf`;
 
     return NextResponse.json({

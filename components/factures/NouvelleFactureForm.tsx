@@ -10,14 +10,13 @@ import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { calculerLigne, calculerTotauxFacture } from "@/lib/facture-calculs";
 import { formatMontant } from "@/lib/format";
 import { MODELE_FACTURE } from "@/lib/facture-modele";
-import type { LigneFactureDraft, Produit } from "@/lib/types";
+import type { Entreprise, LigneFactureDraft, Produit } from "@/lib/types";
 
 interface NouvelleFactureFormProps {
   produits: Produit[];
+  entreprises: Entreprise[];
   defaultNumero: string;
   numeroError?: string | null;
-  /** Taux TVA global (configuré dans Mon entreprise) */
-  tauxTva: number;
 }
 
 function newTempId() {
@@ -37,11 +36,12 @@ function emptyLigne(tauxTva: number): LigneFactureDraft {
 
 export function NouvelleFactureForm({
   produits,
+  entreprises,
   defaultNumero,
   numeroError,
-  tauxTva,
 }: NouvelleFactureFormProps) {
   const router = useRouter();
+  const [entrepriseId, setEntrepriseId] = useState(entreprises[0]!.id);
   const [numero, setNumero] = useState(defaultNumero);
   const [dateEmission, setDateEmission] = useState(
     new Date().toISOString().split("T")[0]
@@ -56,6 +56,12 @@ export function NouvelleFactureForm({
   const [pdfLoading, setPdfLoading] = useState(false);
   const [factureId, setFactureId] = useState<string | null>(null);
   const [generationOpen, setGenerationOpen] = useState(false);
+
+  const entrepriseSelectionnee = useMemo(
+    () => entreprises.find((e) => e.id === entrepriseId) ?? entreprises[0]!,
+    [entreprises, entrepriseId]
+  );
+  const tauxTva = entrepriseSelectionnee.taux_tva;
 
   const lignesAvecTva = useMemo(
     () => lignes.map((l) => ({ ...l, taux_tva: tauxTva })),
@@ -92,6 +98,7 @@ export function NouvelleFactureForm({
     setError(null);
 
     const result = await createFacture({
+      entreprise_id: entrepriseId,
       numero,
       date_emission: dateEmission,
       date_echeance: dateEcheance || null,
@@ -164,6 +171,22 @@ export function NouvelleFactureForm({
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900">Informations générales</h2>
         <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              Entreprise <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={entrepriseId}
+              onChange={(e) => setEntrepriseId(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {entreprises.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nom}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
               N° facture <span className="text-red-500">*</span>
@@ -377,6 +400,7 @@ export function NouvelleFactureForm({
         open={generationOpen}
         onClose={() => setGenerationOpen(false)}
         produits={produits}
+        entreprises={entreprises}
       />
     </div>
   );

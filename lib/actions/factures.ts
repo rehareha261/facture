@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { arrondirMontant, calculerTotauxFacture } from "@/lib/facture-calculs";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import { getTauxTvaGlobal } from "@/lib/taux-tva";
+import { getTauxTvaEntreprise } from "@/lib/taux-tva";
 import type { ActionResult } from "@/lib/actions/clients";
 import type { LigneFactureDraft } from "@/lib/types";
 
 export interface CreateFactureInput {
+  entreprise_id: string;
   numero: string;
   date_emission: string;
   date_echeance: string | null;
@@ -26,6 +27,7 @@ export async function genererNumeroFacture(): Promise<{ numero: string | null; e
 }
 
 function validateFactureInput(input: CreateFactureInput): string | null {
+  if (!input.entreprise_id) return "L'entreprise est obligatoire.";
   if (!input.numero.trim()) return "Le numéro de facture est obligatoire.";
   if (!input.date_emission) return "La date d'émission est obligatoire.";
   if (input.lignes.length === 0) return "Ajoutez au moins une ligne de facturation.";
@@ -45,14 +47,15 @@ export async function createFacture(
   if (validationError) return { success: false, error: validationError };
 
   const supabase = await createSupabaseClient();
-  const tauxTvaGlobal = await getTauxTvaGlobal();
-  const lignesAvecTva = input.lignes.map((l) => ({ ...l, taux_tva: tauxTvaGlobal }));
+  const tauxTva = await getTauxTvaEntreprise(input.entreprise_id);
+  const lignesAvecTva = input.lignes.map((l) => ({ ...l, taux_tva: tauxTva }));
   const totaux = calculerTotauxFacture(lignesAvecTva);
 
   const { data: facture, error: factureError } = await supabase
     .from("factures")
     .insert({
       numero: input.numero.trim(),
+      entreprise_id: input.entreprise_id,
       date_emission: input.date_emission,
       date_echeance: input.date_echeance || null,
       total_ht: arrondirMontant(totaux.total_ht),
@@ -74,7 +77,7 @@ export async function createFacture(
     designation: ligne.designation.trim(),
     quantite: ligne.quantite,
     prix_unitaire_ht: ligne.prix_unitaire_ht,
-    taux_tva: tauxTvaGlobal,
+    taux_tva: tauxTva,
     ordre: index,
   }));
 
@@ -92,6 +95,7 @@ export async function createFacture(
 }
 
 export interface FactureBatchInput {
+  entreprise_id: string;
   date_emission: string;
   mode_paiement?: string | null;
   lignes: {
@@ -121,6 +125,7 @@ export async function createFacturesBatch(
     }
 
     const result = await createFacture({
+      entreprise_id: facture.entreprise_id,
       numero,
       date_emission: facture.date_emission,
       date_echeance: null,

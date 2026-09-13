@@ -5,23 +5,24 @@ import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import { saveEntreprise } from "@/lib/actions/entreprise";
 import { entrepriseToForm } from "@/lib/entreprise-utils";
-import { MODELE_FACTURE } from "@/lib/facture-modele";
+import { TAUX_TVA_DEFAUT } from "@/lib/constants";
 import type { Entreprise, EntrepriseFormData } from "@/lib/types";
 
 const emptyForm: EntrepriseFormData = {
-  nom: MODELE_FACTURE.nom,
-  adresse: MODELE_FACTURE.adresse,
-  nif: MODELE_FACTURE.nif,
-  stat: MODELE_FACTURE.stat,
-  activite: MODELE_FACTURE.activite,
-  taux_tva: MODELE_FACTURE.tauxTva,
+  nom: "",
+  adresse: "",
+  nif: "",
+  stat: "",
+  activite: "",
+  taux_tva: TAUX_TVA_DEFAUT,
 };
 
 interface EntrepriseFormProps {
   entreprise: Entreprise | null;
+  onSaved?: () => void;
 }
 
-export function EntrepriseForm({ entreprise }: EntrepriseFormProps) {
+export function EntrepriseForm({ entreprise, onSaved }: EntrepriseFormProps) {
   const router = useRouter();
   const [form, setForm] = useState<EntrepriseFormData>(
     entreprise ? entrepriseToForm(entreprise) : emptyForm
@@ -51,6 +52,7 @@ export function EntrepriseForm({ entreprise }: EntrepriseFormProps) {
 
     setSuccess(true);
     router.refresh();
+    onSaved?.();
   };
 
   const inputClass =

@@ -2,8 +2,10 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { Facture, LigneFacture } from "@/lib/types";
 import { arrondirMontant, calculerLigne } from "@/lib/facture-calculs";
 import { montantEnLettres } from "@/lib/nombre-en-lettres";
-import { formatNombre } from "@/lib/format";
+import { formatNombrePdf, formatQuantitePdf } from "@/lib/format";
+import { entrepriseNifStat } from "@/lib/entreprise-utils";
 import { MODELE_FACTURE } from "@/lib/facture-modele";
+import type { Entreprise } from "@/lib/types";
 
 const BORDER = "#000000";
 const MIN_LIGNES = 10;
@@ -98,9 +100,10 @@ function tauxTvaLabel(lignes: LigneFacture[]): string {
 export interface InvoicePdfProps {
   facture: Facture;
   lignes: LigneFacture[];
+  entreprise: Entreprise;
 }
 
-export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
+export function InvoicePdfDocument({ facture, lignes, entreprise }: InvoicePdfProps) {
   const sorted = [...lignes].sort((a, b) => a.ordre - b.ordre);
   const padded: (LigneFacture | null)[] = [...sorted];
   while (padded.length < MIN_LIGNES) padded.push(null);
@@ -112,10 +115,16 @@ export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
       <Page size="A4" style={styles.page}>
         <View style={styles.topRow}>
           <View style={styles.companyBlock}>
-            <Text style={styles.companyName}>{MODELE_FACTURE.nom}</Text>
-            <Text style={styles.companyLine}>{MODELE_FACTURE.adresse}</Text>
-            <Text style={styles.companyLine}>{MODELE_FACTURE.nifStat}</Text>
-            <Text style={styles.companyLine}>{MODELE_FACTURE.activite}</Text>
+            <Text style={styles.companyName}>{entreprise.nom}</Text>
+            {entreprise.adresse ? (
+              <Text style={styles.companyLine}>{entreprise.adresse}</Text>
+            ) : null}
+            {entrepriseNifStat(entreprise) ? (
+              <Text style={styles.companyLine}>{entrepriseNifStat(entreprise)}</Text>
+            ) : null}
+            {entreprise.activite ? (
+              <Text style={styles.companyLine}>{entreprise.activite}</Text>
+            ) : null}
           </View>
 
           <View style={styles.metaBlock}>
@@ -161,14 +170,14 @@ export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
             return (
               <View key={ligne.id} style={styles.tableRow}>
                 <Text style={[styles.cell, styles.colQte, { textAlign: "center" }]}>
-                  {ligne.quantite}
+                  {formatQuantitePdf(ligne.quantite)}
                 </Text>
                 <Text style={[styles.cell, styles.colLibelle]}>{ligne.designation}</Text>
                 <Text style={[styles.cell, styles.colPu, { textAlign: "right" }]}>
-                  {formatNombre(ligne.prix_unitaire_ht)}
+                  {formatNombrePdf(ligne.prix_unitaire_ht)}
                 </Text>
                 <Text style={[styles.cell, styles.colMontant]}>
-                  {formatNombre(arrondirMontant(ht))}
+                  {formatNombrePdf(arrondirMontant(ht))}
                 </Text>
               </View>
             );
@@ -179,7 +188,7 @@ export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
             <Text style={[styles.totalLabel, styles.colLibelle]}>TOTAL HT</Text>
             <Text style={[styles.cell, styles.colPu]}> </Text>
             <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
-              {formatNombre(facture.total_ht)}
+              {formatNombrePdf(facture.total_ht)}
             </Text>
           </View>
           <View style={styles.tableRow}>
@@ -187,7 +196,7 @@ export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
             <Text style={[styles.totalLabel, styles.colLibelle]}>{tauxTvaLabel(sorted)}</Text>
             <Text style={[styles.cell, styles.colPu]}> </Text>
             <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
-              {formatNombre(facture.total_tva)}
+              {formatNombrePdf(facture.total_tva)}
             </Text>
           </View>
           <View style={styles.tableRow}>
@@ -195,7 +204,7 @@ export function InvoicePdfDocument({ facture, lignes }: InvoicePdfProps) {
             <Text style={[styles.totalLabel, styles.colLibelle]}>TOTAL TTC</Text>
             <Text style={[styles.cell, styles.colPu]}> </Text>
             <Text style={[styles.cell, styles.colMontant, { fontWeight: "bold" }]}>
-              {formatNombre(facture.total_ttc)}
+              {formatNombrePdf(facture.total_ttc)}
             </Text>
           </View>
         </View>

@@ -41,7 +41,7 @@ export interface Entreprise extends AuditFields {
   stat: string | null;
   /** Ex. « Vente en gros de boissons alcooliques » */
   activite: string | null;
-  /** Taux TVA unique pour toute l'application (%) */
+  /** Taux TVA appliqué aux factures de cette entreprise (%) */
   taux_tva: number;
 }
 
@@ -66,6 +66,7 @@ export interface Produit extends AuditFields {
 export interface Facture extends AuditFields {
   id: string;
   numero: string;
+  entreprise_id: string | null;
   /** Legacy — les factures n'utilisent plus de client (Doit : Clients divers) */
   client_id: string | null;
   date_emission: string;

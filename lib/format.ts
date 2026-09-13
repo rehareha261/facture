@@ -18,3 +18,18 @@ export function formatNombre(montant: number): string {
 export function formatMontant(montant: number): string {
   return `${formatNombre(montant)} ${DEVISE_SYMBOLE}`;
 }
+
+/** PDF : toujours 2 décimales max, affichées avec virgule */
+export function formatNombrePdf(montant: number): string {
+  const arrondi = Math.round(montant * 100) / 100;
+  const [partieEntiere, partieDecimale] = arrondi.toFixed(2).split(".");
+  const avecPoints = partieEntiere.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${avecPoints},${partieDecimale}`;
+}
+
+/** PDF : quantité entière ou max 2 décimales */
+export function formatQuantitePdf(quantite: number): string {
+  const arrondi = Math.round(quantite * 100) / 100;
+  if (Number.isInteger(arrondi)) return String(arrondi);
+  return arrondi.toFixed(2).replace(".", ",");
+}

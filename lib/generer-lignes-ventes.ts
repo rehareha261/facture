@@ -1,4 +1,7 @@
 import { arrondirMontant } from "@/lib/facture-calculs";
+import { VENTES_MENSUELLES_HT } from "@/lib/seed-ventes-mensuelles";
+
+const MOIS_SPECIAL_2023_02 = 637_797.1;
 
 export interface ProduitRef {
   id: string;
@@ -19,6 +22,7 @@ export interface FactureGeneree {
   annee: number;
   mois: number;
   jour: number;
+  numero: string;
   date_emission: string;
   lignes: LigneGeneree[];
   total_ht: number;
@@ -67,6 +71,10 @@ export function repartirMontantParJours(
   annee: number,
   mois: number
 ): { jour: number; montant: number }[] {
+  if (annee === 2023 && mois === 2 && Math.abs(montant - MOIS_SPECIAL_2023_02) < 0.01) {
+    return [{ jour: 15, montant: MOIS_SPECIAL_2023_02 }];
+  }
+
   const rng = seededRandom(annee * 100 + mois);
   const maxJour = joursDansMois(annee, mois);
   const nbFactures = Math.min(maxJour, Math.max(4, Math.floor(4 + rng() * 11)));
@@ -123,6 +131,17 @@ export function composerLignesPourMontant(
   seed: number
 ): LigneGeneree[] {
   if (montant <= 0 || produits.length === 0) return [];
+
+  if (Math.abs(montant - MOIS_SPECIAL_2023_02) < 0.01) {
+    return [
+      {
+        produit_id: null,
+        designation: CONSIGNATION_DESIGNATION,
+        quantite: 1,
+        prix_unitaire_ht: MOIS_SPECIAL_2023_02,
+      },
+    ];
+  }
 
   const rng = seededRandom(seed);
   const ordre = shuffleWithSeed(produits, seed);
@@ -194,6 +213,7 @@ export function genererFacturesMois(
       annee,
       mois,
       jour: part.jour,
+      numero: `SEED-VENTES-${annee}-${pad2(mois)}-${pad2(index + 1)}`,
       date_emission: dateIso(annee, mois, part.jour),
       lignes,
       total_ht: totalHtLignes(lignes),
@@ -230,4 +250,37 @@ export function verifierTotalMois(
   const obtenu = arrondirMontant(factures.reduce((s, f) => s + f.total_ht, 0));
   const ecart = arrondirMontant(obtenu - montantCible);
   return { obtenu, ecart, ok: Math.abs(ecart) < 0.02 };
+}
+
+export function genererToutesLesFacturesSeed(produits: ProduitRef[]): FactureGeneree[] {
+  const factures: FactureGeneree[] = [];
+
+  for (const [anneeStr, montants] of Object.entries(VENTES_MENSUELLES_HT)) {
+    const annee = Number(anneeStr);
+    montants.forEach((montant, moisIndex) => {
+      const mois = moisIndex + 1;
+      factures.push(...genererFacturesMois(annee, mois, montant, produits));
+    });
+  }
+
+  return factures;
+}
+
+export function verifierTotauxMensuelsSeed(
+  factures: FactureGeneree[]
+): { annee: number; mois: number; cible: number; obtenu: number; ok: boolean }[] {
+  const resultats: { annee: number; mois: number; cible: number; obtenu: number; ok: boolean }[] =
+    [];
+
+  for (const [anneeStr, montants] of Object.entries(VENTES_MENSUELLES_HT)) {
+    const annee = Number(anneeStr);
+    montants.forEach((cible, moisIndex) => {
+      const mois = moisIndex + 1;
+      const duMois = factures.filter((f) => f.annee === annee && f.mois === mois);
+      const { obtenu, ok } = verifierTotalMois(duMois, cible);
+      resultats.push({ annee, mois, cible, obtenu, ok });
+    });
+  }
+
+  return resultats;
 }

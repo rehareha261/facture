@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     { href: "/factures/nouvelle", label: "Nouvelle facture", primary: true },
     { href: "/produits", label: "Produits" },
     { href: "/factures", label: "Toutes les factures" },
-    { href: "/entreprise", label: "Mon entreprise" },
+    { href: "/entreprise", label: "Mes entreprises" },
   ];
 
   return (

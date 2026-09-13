@@ -11,7 +11,7 @@ import {
   type FactureGeneree,
 } from "@/lib/generer-lignes-ventes";
 import { formatMontant } from "@/lib/format";
-import type { Produit } from "@/lib/types";
+import type { Entreprise, Produit } from "@/lib/types";
 
 const MOIS_OPTIONS = [
   { value: 1, label: "Janvier" },
@@ -32,6 +32,7 @@ interface GenerationFacturesModalProps {
   open: boolean;
   onClose: () => void;
   produits: Produit[];
+  entreprises: Entreprise[];
 }
 
 function parseMontant(raw: string): number | null {
@@ -48,10 +49,12 @@ export function GenerationFacturesModal({
   open,
   onClose,
   produits,
+  entreprises,
 }: GenerationFacturesModalProps) {
   const router = useRouter();
   const now = new Date();
 
+  const [entrepriseId, setEntrepriseId] = useState(entreprises[0]?.id ?? "");
   const [mois, setMois] = useState(now.getMonth() + 1);
   const [annee, setAnnee] = useState(now.getFullYear());
   const [montantRaw, setMontantRaw] = useState("");
@@ -90,6 +93,11 @@ export function GenerationFacturesModal({
     setError(null);
     setSuccess(null);
 
+    if (!entrepriseId) {
+      setError("Sélectionnez une entreprise.");
+      return;
+    }
+
     if (produitsRef.length === 0) {
       setError("Importez d'abord des produits dans le catalogue.");
       return;
@@ -117,6 +125,7 @@ export function GenerationFacturesModal({
 
     const result = await createFacturesBatch(
       preview.map((f) => ({
+        entreprise_id: entrepriseId,
         date_emission: f.date_emission,
         lignes: f.lignes.map((l) => ({
           produit_id: l.produit_id,
@@ -155,7 +164,24 @@ export function GenerationFacturesModal({
         {error && <Alert variant="error">{error}</Alert>}
         {success && <Alert variant="success">{success}</Alert>}
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-700">Entreprise</label>
+            <select
+              value={entrepriseId}
+              onChange={(e) => {
+                setEntrepriseId(e.target.value);
+                setPreview(null);
+              }}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+            >
+              {entreprises.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nom}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">Mois</label>
             <select
