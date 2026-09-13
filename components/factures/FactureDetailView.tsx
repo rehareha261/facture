@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { calculerLigne } from "@/lib/facture-calculs";
+import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { formatMontant } from "@/lib/format";
 import { AuditInfo } from "@/components/admin/AuditInfo";
 import type { AuditDisplay, FactureComplete } from "@/lib/types";
@@ -29,24 +30,12 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
     setPdfLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate-invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ factureId: facture.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Échec de la génération.");
+      const result = await fetchAndDownloadFacturePdf(facture.id);
+      if (!result.ok) {
+        setError(result.error);
         setPdfLoading(false);
         return;
       }
-      const bytes = Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = data.fileName;
-      a.click();
-      URL.revokeObjectURL(url);
       router.refresh();
     } catch {
       setError("Erreur réseau.");
