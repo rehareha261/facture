@@ -257,29 +257,7 @@ AS $$
   );
 $$;
 
--- ------------------------------------------------------------
--- Storage PDF
--- ------------------------------------------------------------
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('factures', 'factures', true)
-ON CONFLICT (id) DO NOTHING;
-
-DROP POLICY IF EXISTS "PDF public en lecture" ON storage.objects;
-CREATE POLICY "PDF public en lecture"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'factures');
-
-DROP POLICY IF EXISTS "Auth upload PDF" ON storage.objects;
-CREATE POLICY "Auth upload PDF" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'factures' AND auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Auth update PDF" ON storage.objects;
-CREATE POLICY "Auth update PDF" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'factures' AND auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Auth delete PDF" ON storage.objects;
-CREATE POLICY "Auth delete PDF" ON storage.objects
-  FOR DELETE USING (bucket_id = 'factures' AND auth.role() = 'authenticated');
+-- PDF : générés à la demande (pas de bucket Storage — quota Supabase)
 
 -- ------------------------------------------------------------
 -- RLS

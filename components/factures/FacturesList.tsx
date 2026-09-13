@@ -107,8 +107,6 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
     if (errors.length > 0) {
       setActionError(`${errors.length} échec(s) : ${errors.slice(0, 3).join(" · ")}`);
     }
-
-    router.refresh();
   };
 
   return (
@@ -253,16 +251,6 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
                     <div className="flex items-center justify-end gap-2">
-                      {facture.pdf_url && (
-                        <a
-                          href={facture.pdf_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          PDF
-                        </a>
-                      )}
                       <button
                         type="button"
                         onClick={() => handleDelete(facture)}

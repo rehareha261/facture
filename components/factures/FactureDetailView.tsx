@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { calculerLigne } from "@/lib/facture-calculs";
@@ -20,7 +19,6 @@ function fmtDate(d: string) {
 }
 
 export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -36,7 +34,6 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
         setPdfLoading(false);
         return;
       }
-      router.refresh();
     } catch {
       setError("Erreur réseau.");
     }
@@ -54,26 +51,14 @@ export function FactureDetailView({ facture, audit }: FactureDetailViewProps) {
             Émise le {fmtDate(facture.date_emission)}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {facture.pdf_url && (
-            <a
-              href={facture.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              Voir le PDF
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={handleRegeneratePdf}
-            disabled={pdfLoading}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {pdfLoading ? "Génération…" : facture.pdf_url ? "Régénérer le PDF" : "Générer le PDF"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleRegeneratePdf}
+          disabled={pdfLoading}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {pdfLoading ? "Génération…" : "Télécharger le PDF"}
+        </button>
       </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-5">

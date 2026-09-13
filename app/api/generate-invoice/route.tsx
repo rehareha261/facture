@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { generatePdfBuffer } from "@/lib/generate-pdf-buffer";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
 import type { Facture, LigneFacture } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -40,47 +39,9 @@ export async function POST(request: NextRequest) {
     );
 
     const pdfBuffer = await generatePdfBuffer(facture as Facture, lignes);
-
     const fileName = `${(facture.numero as string).replace(/\//g, "-")}.pdf`;
-    const storagePath = `${factureId}/${fileName}`;
-
-    const admin = createSupabaseAdmin();
-    const storageClient = admin ?? supabase;
-
-    const { error: uploadError } = await storageClient.storage
-      .from("factures")
-      .upload(storagePath, pdfBuffer, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
-
-    if (uploadError) {
-      return NextResponse.json(
-        { error: `Échec de l'upload PDF : ${uploadError.message}` },
-        { status: 500 }
-      );
-    }
-
-    const { data: publicUrlData } = storageClient.storage
-      .from("factures")
-      .getPublicUrl(storagePath);
-
-    const pdfUrl = publicUrlData.publicUrl;
-
-    const { error: updateError } = await supabase
-      .from("factures")
-      .update({ pdf_url: pdfUrl })
-      .eq("id", factureId);
-
-    if (updateError) {
-      return NextResponse.json(
-        { error: getSupabaseErrorMessage(updateError) },
-        { status: 500 }
-      );
-    }
 
     return NextResponse.json({
-      pdfUrl,
       fileName,
       pdfBase64: Buffer.from(pdfBuffer).toString("base64"),
     });

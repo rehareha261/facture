@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import { CataloguePickerModal } from "@/components/factures/CataloguePickerModal";
 import { createFacture } from "@/lib/actions/factures";
+import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { calculerLigne, calculerTotauxFacture } from "@/lib/facture-calculs";
 import { formatMontant } from "@/lib/format";
 import { MODELE_FACTURE } from "@/lib/facture-modele";
@@ -127,26 +128,12 @@ export function NouvelleFactureForm({
     }
 
     try {
-      const res = await fetch("/api/generate-invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ factureId: id }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Échec de la génération du PDF.");
+      const result = await fetchAndDownloadFacturePdf(id);
+      if (!result.ok) {
+        setError(result.error);
         setPdfLoading(false);
         return;
       }
-
-      const blob = Uint8Array.from(atob(data.pdfBase64), (c) => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = data.fileName;
-      a.click();
-      URL.revokeObjectURL(url);
 
       router.refresh();
     } catch {

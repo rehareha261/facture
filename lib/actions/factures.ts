@@ -91,17 +91,6 @@ export async function createFacture(
   return { success: true, factureId: facture.id };
 }
 
-export async function updateFacturePdfUrl(id: string, pdfUrl: string): Promise<ActionResult> {
-  const supabase = await createSupabaseClient();
-  const { error } = await supabase.from("factures").update({ pdf_url: pdfUrl }).eq("id", id);
-
-  if (error) return { success: false, error: getSupabaseErrorMessage(error) };
-
-  revalidatePath("/factures");
-  revalidatePath(`/factures/${id}`);
-  return { success: true };
-}
-
 export async function deleteFacture(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
   const { error } = await supabase.from("factures").delete().eq("id", id);
