@@ -91,6 +91,63 @@ export async function createFacture(
   return { success: true, factureId: facture.id };
 }
 
+export interface FactureBatchInput {
+  date_emission: string;
+  mode_paiement?: string | null;
+  lignes: {
+    produit_id: string | null;
+    designation: string;
+    quantite: number;
+    prix_unitaire_ht: number;
+  }[];
+}
+
+export async function createFacturesBatch(
+  factures: FactureBatchInput[]
+): Promise<ActionResult & { count?: number }> {
+  if (factures.length === 0) {
+    return { success: false, error: "Aucune facture à enregistrer." };
+  }
+
+  let count = 0;
+
+  for (const facture of factures) {
+    const { numero, error: numErr } = await genererNumeroFacture();
+    if (numErr || !numero) {
+      return {
+        success: false,
+        error: numErr ?? `Impossible de générer le numéro (facture ${count + 1}).`,
+      };
+    }
+
+    const result = await createFacture({
+      numero,
+      date_emission: facture.date_emission,
+      date_echeance: null,
+      notes: null,
+      mode_paiement: facture.mode_paiement ?? "AU COMPTANT",
+      lignes: facture.lignes.map((l) => ({
+        tempId: crypto.randomUUID(),
+        produit_id: l.produit_id,
+        designation: l.designation,
+        quantite: l.quantite,
+        prix_unitaire_ht: l.prix_unitaire_ht,
+        taux_tva: 0,
+      })),
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: `${count} facture(s) enregistrée(s). Erreur sur la suivante : ${result.error}`,
+      };
+    }
+    count++;
+  }
+
+  return { success: true, count };
+}
+
 export async function deleteFacture(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
   const { error } = await supabase.from("factures").delete().eq("id", id);

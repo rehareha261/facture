@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import { CataloguePickerModal } from "@/components/factures/CataloguePickerModal";
+import { GenerationFacturesModal } from "@/components/factures/GenerationFacturesModal";
 import { createFacture } from "@/lib/actions/factures";
 import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { calculerLigne, calculerTotauxFacture } from "@/lib/facture-calculs";
@@ -54,6 +55,7 @@ export function NouvelleFactureForm({
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [factureId, setFactureId] = useState<string | null>(null);
+  const [generationOpen, setGenerationOpen] = useState(false);
 
   const lignesAvecTva = useMemo(
     () => lignes.map((l) => ({ ...l, taux_tva: tauxTva })),
@@ -148,6 +150,16 @@ export function NouvelleFactureForm({
       {(error || numeroError) && (
         <Alert variant="error">{error ?? numeroError}</Alert>
       )}
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setGenerationOpen(true)}
+          className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+        >
+          Génération automatique
+        </button>
+      </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900">Informations générales</h2>
@@ -359,6 +371,12 @@ export function NouvelleFactureForm({
         onClose={() => setCatalogueOpen(false)}
         produits={produits}
         onSelect={addFromCatalogue}
+      />
+
+      <GenerationFacturesModal
+        open={generationOpen}
+        onClose={() => setGenerationOpen(false)}
+        produits={produits}
       />
     </div>
   );
