@@ -9,9 +9,16 @@ import { importProduitsCsv } from "@/lib/actions/import-produits";
 interface ImportProduitsModalProps {
   open: boolean;
   onClose: () => void;
+  entrepriseId: string;
+  entrepriseNom: string;
 }
 
-export function ImportProduitsModal({ open, onClose }: ImportProduitsModalProps) {
+export function ImportProduitsModal({
+  open,
+  onClose,
+  entrepriseId,
+  entrepriseNom,
+}: ImportProduitsModalProps) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +51,7 @@ export function ImportProduitsModal({ open, onClose }: ImportProduitsModalProps)
     setSuccess(null);
 
     const content = await file.text();
-    const result = await importProduitsCsv(content);
+    const result = await importProduitsCsv(content, entrepriseId);
 
     setLoading(false);
 
@@ -62,6 +69,10 @@ export function ImportProduitsModal({ open, onClose }: ImportProduitsModalProps)
   return (
     <Modal open={open} onClose={handleClose} title="Importer des produits">
       <div className="space-y-4">
+        <p className="text-sm text-zinc-600">
+          Les produits seront ajoutés au catalogue de{" "}
+          <span className="font-medium text-zinc-900">{entrepriseNom}</span>.
+        </p>
         {error && <Alert variant="error">{error}</Alert>}
         {success && <Alert variant="success">{success}</Alert>}
         {warnings.length > 0 && (

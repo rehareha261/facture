@@ -11,6 +11,7 @@ interface ProduitFormModalProps {
   open: boolean;
   onClose: () => void;
   produit?: Produit | null;
+  entrepriseId: string;
 }
 
 const emptyForm: ProduitFormData = {
@@ -20,9 +21,11 @@ const emptyForm: ProduitFormData = {
 
 function ProduitFormBody({
   produit,
+  entrepriseId,
   onClose,
 }: {
   produit?: Produit | null;
+  entrepriseId: string;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -42,7 +45,7 @@ function ProduitFormBody({
 
     const result = isEditing
       ? await updateProduit(produit!.id, form)
-      : await createProduit(form);
+      : await createProduit(entrepriseId, form);
 
     setLoading(false);
     if (!result.success) {
@@ -112,7 +115,12 @@ function ProduitFormBody({
   );
 }
 
-export function ProduitFormModal({ open, onClose, produit }: ProduitFormModalProps) {
+export function ProduitFormModal({
+  open,
+  onClose,
+  produit,
+  entrepriseId,
+}: ProduitFormModalProps) {
   return (
     <Modal
       open={open}
@@ -120,7 +128,12 @@ export function ProduitFormModal({ open, onClose, produit }: ProduitFormModalPro
       title={produit ? "Modifier le produit" : "Nouveau produit"}
     >
       {open && (
-        <ProduitFormBody key={produit?.id ?? "new"} produit={produit} onClose={onClose} />
+        <ProduitFormBody
+          key={produit?.id ?? `${entrepriseId}-new`}
+          produit={produit}
+          entrepriseId={entrepriseId}
+          onClose={onClose}
+        />
       )}
     </Modal>
   );

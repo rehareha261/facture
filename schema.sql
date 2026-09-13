@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS clients (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS produits (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entreprise_id     UUID NOT NULL REFERENCES entreprise(id) ON DELETE CASCADE,
   designation       TEXT NOT NULL,
   prix_unitaire_ht  NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK (prix_unitaire_ht >= 0),
   taux_tva          NUMERIC(5, 2) NOT NULL DEFAULT 20 CHECK (taux_tva >= 0 AND taux_tva <= 100),
@@ -97,6 +98,8 @@ CREATE TABLE IF NOT EXISTS produits (
   created_by        UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   updated_by        UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_produits_entreprise_id ON produits(entreprise_id);
 
 -- ------------------------------------------------------------
 -- Factures

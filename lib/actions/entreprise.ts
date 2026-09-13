@@ -87,16 +87,24 @@ export async function saveEntreprise(
 export async function deleteEntreprise(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
 
-  const { count, error: countErr } = await supabase
-    .from("factures")
-    .select("*", { count: "exact", head: true })
-    .eq("entreprise_id", id);
+  const [facturesRes, produitsRes] = await Promise.all([
+    supabase.from("factures").select("*", { count: "exact", head: true }).eq("entreprise_id", id),
+    supabase.from("produits").select("*", { count: "exact", head: true }).eq("entreprise_id", id),
+  ]);
 
-  if (countErr) return { success: false, error: getSupabaseErrorMessage(countErr) };
-  if ((count ?? 0) > 0) {
+  if (facturesRes.error) return { success: false, error: getSupabaseErrorMessage(facturesRes.error) };
+  if (produitsRes.error) return { success: false, error: getSupabaseErrorMessage(produitsRes.error) };
+
+  if ((facturesRes.count ?? 0) > 0) {
     return {
       success: false,
       error: "Impossible de supprimer : des factures sont liées à cette entreprise.",
+    };
+  }
+  if ((produitsRes.count ?? 0) > 0) {
+    return {
+      success: false,
+      error: "Impossible de supprimer : des produits sont liés à cette entreprise.",
     };
   }
 

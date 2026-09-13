@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import { getTauxTvaGlobal } from "@/lib/taux-tva";
+import { getTauxTvaEntreprise } from "@/lib/taux-tva";
 import type { ActionResult } from "@/lib/actions/clients";
 import type { ProduitFormData } from "@/lib/types";
 
@@ -13,13 +13,19 @@ function validateProduitForm(data: ProduitFormData): string | null {
   return null;
 }
 
-export async function createProduit(data: ProduitFormData): Promise<ActionResult> {
+export async function createProduit(
+  entrepriseId: string,
+  data: ProduitFormData
+): Promise<ActionResult> {
+  if (!entrepriseId) return { success: false, error: "L'entreprise est obligatoire." };
+
   const validationError = validateProduitForm(data);
   if (validationError) return { success: false, error: validationError };
 
-  const taux_tva = await getTauxTvaGlobal();
+  const taux_tva = await getTauxTvaEntreprise(entrepriseId);
   const supabase = await createSupabaseClient();
   const { error } = await supabase.from("produits").insert({
+    entreprise_id: entrepriseId,
     designation: data.designation.trim(),
     prix_unitaire_ht: data.prix_unitaire_ht,
     taux_tva,
@@ -28,6 +34,7 @@ export async function createProduit(data: ProduitFormData): Promise<ActionResult
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
   revalidatePath("/produits");
+  revalidatePath("/factures/nouvelle");
   revalidatePath("/admin");
   return { success: true };
 }
@@ -48,6 +55,7 @@ export async function updateProduit(id: string, data: ProduitFormData): Promise<
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
   revalidatePath("/produits");
+  revalidatePath("/factures/nouvelle");
   revalidatePath("/admin");
   return { success: true };
 }
@@ -59,6 +67,7 @@ export async function deleteProduit(id: string): Promise<ActionResult> {
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
   revalidatePath("/produits");
+  revalidatePath("/factures/nouvelle");
   revalidatePath("/admin");
   return { success: true };
 }

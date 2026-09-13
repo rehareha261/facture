@@ -63,6 +63,21 @@ export function NouvelleFactureForm({
   );
   const tauxTva = entrepriseSelectionnee.taux_tva;
 
+  const produitsCatalogue = useMemo(
+    () => produits.filter((p) => p.entreprise_id === entrepriseId),
+    [produits, entrepriseId]
+  );
+
+  const handleEntrepriseChange = (id: string) => {
+    setEntrepriseId(id);
+    const nouveauTaux = entreprises.find((e) => e.id === id)?.taux_tva ?? tauxTva;
+    setLignes((prev) =>
+      prev
+        .filter((l) => !l.produit_id || produits.some((p) => p.id === l.produit_id && p.entreprise_id === id))
+        .map((l) => ({ ...l, taux_tva: nouveauTaux }))
+    );
+  };
+
   const lignesAvecTva = useMemo(
     () => lignes.map((l) => ({ ...l, taux_tva: tauxTva })),
     [lignes, tauxTva]
@@ -177,7 +192,7 @@ export function NouvelleFactureForm({
             </label>
             <select
               value={entrepriseId}
-              onChange={(e) => setEntrepriseId(e.target.value)}
+              onChange={(e) => handleEntrepriseChange(e.target.value)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {entreprises.map((e) => (
@@ -392,7 +407,7 @@ export function NouvelleFactureForm({
       <CataloguePickerModal
         open={catalogueOpen}
         onClose={() => setCatalogueOpen(false)}
-        produits={produits}
+        produits={produitsCatalogue}
         onSelect={addFromCatalogue}
       />
 

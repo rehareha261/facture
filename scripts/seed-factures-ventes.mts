@@ -53,29 +53,6 @@ async function getTauxTva(): Promise<number> {
 }
 
 async function main() {
-  const { data: produitsDb, error: prodErr } = await supabase
-    .from("produits")
-    .select("id, designation, prix_unitaire_ht")
-    .order("prix_unitaire_ht");
-
-  if (prodErr) {
-    console.error("Erreur chargement produits :", prodErr.message);
-    process.exit(1);
-  }
-
-  if (!produitsDb?.length) {
-    console.error("Aucun produit en base. Importez d'abord le CSV via /produits.");
-    process.exit(1);
-  }
-
-  const produits: ProduitRef[] = produitsDb.map((p) => ({
-    id: p.id,
-    designation: p.designation,
-    prix_unitaire_ht: Number(p.prix_unitaire_ht),
-  }));
-
-  console.log(`${produits.length} produit(s) trouvé(s).`);
-
   const { data: entreprises, error: entErr } = await supabase
     .from("entreprise")
     .select("id, nom")
@@ -89,6 +66,32 @@ async function main() {
 
   const entrepriseId = entreprises[0]!.id;
   console.log(`Entreprise seed : ${entreprises[0]!.nom}`);
+
+  const { data: produitsDb, error: prodErr } = await supabase
+    .from("produits")
+    .select("id, designation, prix_unitaire_ht")
+    .eq("entreprise_id", entrepriseId)
+    .order("prix_unitaire_ht");
+
+  if (prodErr) {
+    console.error("Erreur chargement produits :", prodErr.message);
+    process.exit(1);
+  }
+
+  if (!produitsDb?.length) {
+    console.error(
+      "Aucun produit pour cette entreprise. Importez d'abord le CSV via /produits."
+    );
+    process.exit(1);
+  }
+
+  const produits: ProduitRef[] = produitsDb.map((p) => ({
+    id: p.id,
+    designation: p.designation,
+    prix_unitaire_ht: Number(p.prix_unitaire_ht),
+  }));
+
+  console.log(`${produits.length} produit(s) trouvé(s).`);
 
   const factures = genererToutesLesFacturesSeed(produits);
   const verifs = verifierTotauxMensuelsSeed(factures);
