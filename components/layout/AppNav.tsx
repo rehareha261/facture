@@ -11,6 +11,7 @@ const links = [
   { href: "/factures/nouvelle", label: "Nouvelle facture" },
   { href: "/produits", label: "Produits" },
   { href: "/entreprise", label: "Mes entreprises" },
+  { href: "/aide", label: "Aide" },
 ];
 
 interface AppNavProps {

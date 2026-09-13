@@ -52,6 +52,7 @@ export default async function DashboardPage() {
     { href: "/produits", label: "Produits" },
     { href: "/factures", label: "Toutes les factures" },
     { href: "/entreprise", label: "Mes entreprises" },
+    { href: "/aide", label: "Aide" },
   ];
 
   return (

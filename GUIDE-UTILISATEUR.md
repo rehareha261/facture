@@ -89,6 +89,7 @@ flowchart TD
 | **Nouvelle facture** | Créer une facture manuellement ou lancer la génération automatique. |
 | **Produits** | Catalogue unique : ajout, modification, import CSV. |
 | **Mes entreprises** | Créer et modifier vos sociétés émettrices. |
+| **Aide** | Ce guide utilisateur, accessible à tout moment. |
 
 ---
 
@@ -345,6 +346,14 @@ Les PDF ne sont **pas stockés** dans l’application : ils sont **générés à
 4. Chaque facture est téléchargée l’une après l’autre ; une barre de progression indique l’avancement.
 
 Le PDF reprend les informations de **l’entreprise** liée à la facture (nom, adresse, NIF, STAT, activité) ainsi que toutes les lignes et les totaux.
+
+### Montant en toutes lettres
+
+En bas du PDF, la ligne **« Arrêté à la somme de… »** reprend le **total TTC** en toutes lettres (en ariary).
+
+Ce montant est **arrondi à l’ariary entier le plus proche** avant d’être écrit en lettres. Les centimes ne sont pas mentionnés dans cette phrase.
+
+**Exemple :** un total TTC de **1 234 567,49 Ar** s’affichera numériquement avec les décimales, mais en lettres : *« un million deux cent trente-quatre mille cinq cent soixante-sept ariary »* (arrondi à **1 234 567 Ar**).
 
 ```mermaid
 flowchart TD
