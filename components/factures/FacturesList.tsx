@@ -7,18 +7,17 @@ import { Alert } from "@/components/ui/Alert";
 import { deleteFacture } from "@/lib/actions/factures";
 import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { formatMontant } from "@/lib/format";
-import type { FactureAvecLignes, Produit } from "@/lib/types";
+import type { Facture } from "@/lib/types";
 
 interface FacturesListProps {
-  factures: FactureAvecLignes[];
-  produits: Pick<Produit, "id" | "designation">[];
+  factures: Facture[];
 }
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("fr-FR");
 }
 
-export function FacturesList({ factures, produits }: FacturesListProps) {
+export function FacturesList({ factures }: FacturesListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -29,7 +28,6 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
   const [pdfProgress, setPdfProgress] = useState("");
 
   const filtreNumero = searchParams.get("numero") ?? "";
-  const filtreProduit = searchParams.get("produit") ?? "";
   const filtreDebut = searchParams.get("debut") ?? "";
   const filtreFin = searchParams.get("fin") ?? "";
 
@@ -61,7 +59,7 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
     }
   };
 
-  const handleDelete = async (facture: FactureAvecLignes) => {
+  const handleDelete = async (facture: Facture) => {
     const confirmed = window.confirm(
       `Supprimer la facture ${facture.numero} ? Cette action est irréversible.`
     );
@@ -111,7 +109,7 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
 
   return (
     <>
-      <div className="mb-6 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">N° facture</label>
           <input
@@ -121,21 +119,6 @@ export function FacturesList({ factures, produits }: FacturesListProps) {
             onChange={(e) => updateFilter("numero", e.target.value)}
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-500">Produit</label>
-          <select
-            value={filtreProduit}
-            onChange={(e) => updateFilter("produit", e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-          >
-            <option value="">Tous</option>
-            {produits.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.designation}
-              </option>
-            ))}
-          </select>
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">Du</label>

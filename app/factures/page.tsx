@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { FACTURES_PAGE_SIZE, paginationRange, totalPages } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import type { FactureAvecLignes, Produit } from "@/lib/types";
+import type { Facture } from "@/lib/types";
 
 export const metadata = { title: "Factures — Facturation" };
 export const dynamic = "force-dynamic";
@@ -19,31 +19,22 @@ export default async function FacturesPage({
   const sp = await searchParams;
   const page = Math.max(1, parseInt(String(sp.page ?? "1"), 10) || 1);
   const numero = String(sp.numero ?? "").trim();
-  const produitId = String(sp.produit ?? "").trim();
   const debut = String(sp.debut ?? "").trim();
   const fin = String(sp.fin ?? "").trim();
 
   const { from, to } = paginationRange(page);
   const supabase = await createClient();
 
-  const selectCols = produitId
-    ? "*, lignes_facture!inner(produit_id, designation)"
-    : "*, lignes_facture(produit_id, designation)";
-
   let facturesQuery = supabase
     .from("factures")
-    .select(selectCols, { count: "exact" })
+    .select("*", { count: "exact" })
     .order("date_emission", { ascending: false });
 
   if (numero) facturesQuery = facturesQuery.ilike("numero", `%${numero}%`);
   if (debut) facturesQuery = facturesQuery.gte("date_emission", debut);
   if (fin) facturesQuery = facturesQuery.lte("date_emission", fin);
-  if (produitId) facturesQuery = facturesQuery.eq("lignes_facture.produit_id", produitId);
 
-  const [facturesRes, produitsRes] = await Promise.all([
-    facturesQuery.range(from, to),
-    supabase.from("produits").select("id, designation").order("designation"),
-  ]);
+  const facturesRes = await facturesQuery.range(from, to);
 
   if (facturesRes.error) {
     return (
@@ -72,10 +63,7 @@ export default async function FacturesPage({
       </div>
 
       <Suspense fallback={<p className="text-zinc-500">Chargement…</p>}>
-        <FacturesList
-          factures={(facturesRes.data ?? []) as FactureAvecLignes[]}
-          produits={(produitsRes.data ?? []) as Pick<Produit, "id" | "designation">[]}
-        />
+        <FacturesList factures={(facturesRes.data ?? []) as Facture[]} />
         <Pagination currentPage={page} totalPages={pages} totalItems={total} />
       </Suspense>
     </div>
