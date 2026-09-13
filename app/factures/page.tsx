@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { FacturesList } from "@/components/factures/FacturesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { Alert } from "@/components/ui/Alert";
+import { getEntreprises } from "@/lib/actions/entreprise";
 import { FACTURES_PAGE_SIZE, paginationRange, totalPages } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
@@ -21,20 +22,29 @@ export default async function FacturesPage({
   const numero = String(sp.numero ?? "").trim();
   const debut = String(sp.debut ?? "").trim();
   const fin = String(sp.fin ?? "").trim();
+  const entreprise = String(sp.entreprise ?? "").trim();
 
   const { from, to } = paginationRange(page);
   const supabase = await createClient();
 
-  let facturesQuery = supabase
-    .from("factures")
-    .select("*", { count: "exact" })
-    .order("date_emission", { ascending: false });
+  const [entreprisesRes, facturesQueryBase] = await Promise.all([
+    getEntreprises(),
+    (async () => {
+      let q = supabase
+        .from("factures")
+        .select("*", { count: "exact" })
+        .order("date_emission", { ascending: false });
 
-  if (numero) facturesQuery = facturesQuery.ilike("numero", `%${numero}%`);
-  if (debut) facturesQuery = facturesQuery.gte("date_emission", debut);
-  if (fin) facturesQuery = facturesQuery.lte("date_emission", fin);
+      if (numero) q = q.ilike("numero", `%${numero}%`);
+      if (debut) q = q.gte("date_emission", debut);
+      if (fin) q = q.lte("date_emission", fin);
+      if (entreprise) q = q.eq("entreprise_id", entreprise);
 
-  const facturesRes = await facturesQuery.range(from, to);
+      return q.range(from, to);
+    })(),
+  ]);
+
+  const facturesRes = facturesQueryBase;
 
   if (facturesRes.error) {
     return (
@@ -63,7 +73,10 @@ export default async function FacturesPage({
       </div>
 
       <Suspense fallback={<p className="text-zinc-500">Chargement…</p>}>
-        <FacturesList factures={(facturesRes.data ?? []) as Facture[]} />
+        <FacturesList
+          factures={(facturesRes.data ?? []) as Facture[]}
+          entreprises={entreprisesRes.error ? [] : entreprisesRes.data}
+        />
         <Pagination currentPage={page} totalPages={pages} totalItems={total} />
       </Suspense>
     </div>

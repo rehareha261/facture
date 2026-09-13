@@ -63,19 +63,10 @@ export function NouvelleFactureForm({
   );
   const tauxTva = entrepriseSelectionnee.taux_tva;
 
-  const produitsCatalogue = useMemo(
-    () => produits.filter((p) => p.entreprise_id === entrepriseId),
-    [produits, entrepriseId]
-  );
-
   const handleEntrepriseChange = (id: string) => {
     setEntrepriseId(id);
     const nouveauTaux = entreprises.find((e) => e.id === id)?.taux_tva ?? tauxTva;
-    setLignes((prev) =>
-      prev
-        .filter((l) => !l.produit_id || produits.some((p) => p.id === l.produit_id && p.entreprise_id === id))
-        .map((l) => ({ ...l, taux_tva: nouveauTaux }))
-    );
+    setLignes((prev) => prev.map((l) => ({ ...l, taux_tva: nouveauTaux })));
   };
 
   const lignesAvecTva = useMemo(
@@ -407,7 +398,7 @@ export function NouvelleFactureForm({
       <CataloguePickerModal
         open={catalogueOpen}
         onClose={() => setCatalogueOpen(false)}
-        produits={produitsCatalogue}
+        produits={produits}
         onSelect={addFromCatalogue}
       />
 

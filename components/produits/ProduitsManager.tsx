@@ -1,29 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import { ImportProduitsModal } from "@/components/produits/ImportProduitsModal";
 import { ProduitFormModal } from "@/components/produits/ProduitFormModal";
 import { deleteProduit } from "@/lib/actions/produits";
 import { filtrerProduits } from "@/lib/filtre-produits";
 import { formatMontant } from "@/lib/format";
-import type { Entreprise, Produit } from "@/lib/types";
+import type { Produit } from "@/lib/types";
 
 interface ProduitsManagerProps {
-  entreprises: Entreprise[];
   produits: Produit[];
-  defaultEntrepriseId: string;
 }
 
-export function ProduitsManager({
-  entreprises,
-  produits,
-  defaultEntrepriseId,
-}: ProduitsManagerProps) {
+export function ProduitsManager({ produits }: ProduitsManagerProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [entrepriseId, setEntrepriseId] = useState(defaultEntrepriseId);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -31,28 +23,10 @@ export function ProduitsManager({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const entrepriseSelectionnee = useMemo(
-    () => entreprises.find((e) => e.id === entrepriseId) ?? entreprises[0]!,
-    [entreprises, entrepriseId]
-  );
-
-  const produitsEntreprise = useMemo(
-    () => produits.filter((p) => p.entreprise_id === entrepriseId),
-    [produits, entrepriseId]
-  );
-
   const produitsFiltres = useMemo(
-    () => filtrerProduits(produitsEntreprise, search),
-    [produitsEntreprise, search]
+    () => filtrerProduits(produits, search),
+    [produits, search]
   );
-
-  const handleEntrepriseChange = (id: string) => {
-    setEntrepriseId(id);
-    setSearch("");
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("entreprise", id);
-    router.replace(`/produits?${params.toString()}`);
-  };
 
   const handleDelete = async (produit: Produit) => {
     const confirmed = window.confirm(
@@ -74,21 +48,10 @@ export function ProduitsManager({
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-[200px] flex-1 sm:max-w-xs">
-          <label className="mb-1 block text-sm font-medium text-zinc-700">Entreprise</label>
-          <select
-            value={entrepriseId}
-            onChange={(e) => handleEntrepriseChange(e.target.value)}
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            {entreprises.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nom}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-zinc-500">
+          {produitsFiltres.length} / {produits.length} produit{produits.length !== 1 ? "s" : ""}
+        </p>
         <div className="flex gap-2">
           <button
             type="button"
@@ -110,14 +73,7 @@ export function ProduitsManager({
         </div>
       </div>
 
-      <p className="mb-4 text-sm text-zinc-500">
-        Catalogue de <span className="font-medium text-zinc-700">{entrepriseSelectionnee.nom}</span>
-        {" — "}
-        {produitsFiltres.length} / {produitsEntreprise.length} produit
-        {produitsEntreprise.length !== 1 ? "s" : ""}
-      </p>
-
-      {produitsEntreprise.length > 0 && (
+      {produits.length > 0 && (
         <input
           type="search"
           placeholder="Rechercher un produit…"
@@ -133,11 +89,9 @@ export function ProduitsManager({
         </div>
       )}
 
-      {produitsEntreprise.length === 0 ? (
+      {produits.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center">
-          <p className="text-zinc-500">
-            Aucun produit pour cette entreprise. Créez-en un ou importez un CSV.
-          </p>
+          <p className="text-zinc-500">Aucun produit dans le catalogue.</p>
         </div>
       ) : produitsFiltres.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 py-12 text-center">
@@ -202,15 +156,9 @@ export function ProduitsManager({
           setEditingProduit(null);
         }}
         produit={editingProduit}
-        entrepriseId={entrepriseId}
       />
 
-      <ImportProduitsModal
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        entrepriseId={entrepriseId}
-        entrepriseNom={entrepriseSelectionnee.nom}
-      />
+      <ImportProduitsModal open={importOpen} onClose={() => setImportOpen(false)} />
     </>
   );
 }

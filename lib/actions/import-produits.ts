@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { parseProduitsCsv } from "@/lib/import-produits";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import { getTauxTvaEntreprise } from "@/lib/taux-tva";
+import { getTauxTvaGlobal } from "@/lib/taux-tva";
 
 export type ImportResult = {
   success: boolean;
@@ -13,20 +13,8 @@ export type ImportResult = {
   error?: string;
 };
 
-/** Importe des produits depuis un contenu CSV pour une entreprise */
-export async function importProduitsCsv(
-  csvContent: string,
-  entrepriseId: string
-): Promise<ImportResult> {
-  if (!entrepriseId) {
-    return {
-      success: false,
-      imported: 0,
-      errors: [],
-      error: "L'entreprise est obligatoire.",
-    };
-  }
-
+/** Importe des produits depuis un contenu CSV */
+export async function importProduitsCsv(csvContent: string): Promise<ImportResult> {
   const { rows, errors: parseErrors } = parseProduitsCsv(csvContent);
 
   if (rows.length === 0) {
@@ -38,10 +26,9 @@ export async function importProduitsCsv(
     };
   }
 
-  const taux_tva = await getTauxTvaEntreprise(entrepriseId);
+  const taux_tva = await getTauxTvaGlobal();
   const supabase = await createSupabaseClient();
   const payload = rows.map((r) => ({
-    entreprise_id: entrepriseId,
     designation: r.designation,
     prix_unitaire_ht: r.prix_unitaire_ht,
     taux_tva,

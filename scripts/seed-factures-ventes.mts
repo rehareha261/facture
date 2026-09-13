@@ -70,7 +70,6 @@ async function main() {
   const { data: produitsDb, error: prodErr } = await supabase
     .from("produits")
     .select("id, designation, prix_unitaire_ht")
-    .eq("entreprise_id", entrepriseId)
     .order("prix_unitaire_ht");
 
   if (prodErr) {
@@ -79,9 +78,7 @@ async function main() {
   }
 
   if (!produitsDb?.length) {
-    console.error(
-      "Aucun produit pour cette entreprise. Importez d'abord le CSV via /produits."
-    );
+    console.error("Aucun produit en base. Importez d'abord le CSV via /produits.");
     process.exit(1);
   }
 

@@ -58,7 +58,6 @@ export interface Client extends AuditFields {
 
 export interface Produit extends AuditFields {
   id: string;
-  entreprise_id: string;
   designation: string;
   prix_unitaire_ht: number;
   taux_tva: number;

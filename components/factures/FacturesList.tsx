@@ -7,17 +7,18 @@ import { Alert } from "@/components/ui/Alert";
 import { deleteFacture } from "@/lib/actions/factures";
 import { fetchAndDownloadFacturePdf } from "@/lib/download-facture-pdf";
 import { formatMontant } from "@/lib/format";
-import type { Facture } from "@/lib/types";
+import type { Entreprise, Facture } from "@/lib/types";
 
 interface FacturesListProps {
   factures: Facture[];
+  entreprises: Entreprise[];
 }
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("fr-FR");
 }
 
-export function FacturesList({ factures }: FacturesListProps) {
+export function FacturesList({ factures, entreprises }: FacturesListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -30,6 +31,9 @@ export function FacturesList({ factures }: FacturesListProps) {
   const filtreNumero = searchParams.get("numero") ?? "";
   const filtreDebut = searchParams.get("debut") ?? "";
   const filtreFin = searchParams.get("fin") ?? "";
+  const filtreEntreprise = searchParams.get("entreprise") ?? "";
+
+  const entrepriseParId = Object.fromEntries(entreprises.map((e) => [e.id, e.nom]));
 
   const allSelected = factures.length > 0 && factures.every((f) => selected.has(f.id));
   const someSelected = factures.some((f) => selected.has(f.id));
@@ -109,7 +113,22 @@ export function FacturesList({ factures }: FacturesListProps) {
 
   return (
     <>
-      <div className="mb-6 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-500">Entreprise</label>
+          <select
+            value={filtreEntreprise}
+            onChange={(e) => updateFilter("entreprise", e.target.value)}
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+          >
+            <option value="">Toutes les entreprises</option>
+            {entreprises.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nom}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">N° facture</label>
           <input
@@ -192,6 +211,11 @@ export function FacturesList({ factures }: FacturesListProps) {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">
                   N°
                 </th>
+                {entreprises.length > 1 && (
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">
+                    Entreprise
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase text-zinc-500">
                   Émission
                 </th>
@@ -226,6 +250,13 @@ export function FacturesList({ factures }: FacturesListProps) {
                       {facture.numero}
                     </Link>
                   </td>
+                  {entreprises.length > 1 && (
+                    <td className="px-4 py-3 text-sm text-zinc-600">
+                      {facture.entreprise_id
+                        ? (entrepriseParId[facture.entreprise_id] ?? "—")
+                        : "—"}
+                    </td>
+                  )}
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-600">
                     {fmtDate(facture.date_emission)}
                   </td>

@@ -66,14 +66,12 @@ export function GenerationFacturesModal({
 
   const produitsRef = useMemo(
     () =>
-      produits
-        .filter((p) => p.entreprise_id === entrepriseId)
-        .map((p) => ({
-          id: p.id,
-          designation: p.designation,
-          prix_unitaire_ht: Number(p.prix_unitaire_ht),
-        })),
-    [produits, entrepriseId]
+      produits.map((p) => ({
+        id: p.id,
+        designation: p.designation,
+        prix_unitaire_ht: Number(p.prix_unitaire_ht),
+      })),
+    [produits]
   );
 
   const verification = useMemo(() => {
@@ -101,7 +99,7 @@ export function GenerationFacturesModal({
     }
 
     if (produitsRef.length === 0) {
-      setError("Importez d'abord des produits pour cette entreprise.");
+      setError("Importez d'abord des produits dans le catalogue.");
       return;
     }
 

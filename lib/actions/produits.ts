@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
-import { getTauxTvaEntreprise } from "@/lib/taux-tva";
+import { getTauxTvaGlobal } from "@/lib/taux-tva";
 import type { ActionResult } from "@/lib/actions/clients";
 import type { ProduitFormData } from "@/lib/types";
 
@@ -13,19 +13,13 @@ function validateProduitForm(data: ProduitFormData): string | null {
   return null;
 }
 
-export async function createProduit(
-  entrepriseId: string,
-  data: ProduitFormData
-): Promise<ActionResult> {
-  if (!entrepriseId) return { success: false, error: "L'entreprise est obligatoire." };
-
+export async function createProduit(data: ProduitFormData): Promise<ActionResult> {
   const validationError = validateProduitForm(data);
   if (validationError) return { success: false, error: validationError };
 
-  const taux_tva = await getTauxTvaEntreprise(entrepriseId);
+  const taux_tva = await getTauxTvaGlobal();
   const supabase = await createSupabaseClient();
   const { error } = await supabase.from("produits").insert({
-    entreprise_id: entrepriseId,
     designation: data.designation.trim(),
     prix_unitaire_ht: data.prix_unitaire_ht,
     taux_tva,
