@@ -1,10 +1,13 @@
+import { Suspense } from "react";
+import { AdminCorbeilleManager } from "@/components/admin/AdminCorbeilleManager";
 import { UsersManager } from "@/components/admin/UsersManager";
 import { SuiviModifications, type SuiviItem } from "@/components/admin/SuiviModifications";
 import { Alert } from "@/components/ui/Alert";
 import { getProfilesByIds, requireAdmin } from "@/lib/auth";
 import { buildAuditDisplay } from "@/lib/audit-utils";
-import { getAllProfiles } from "@/lib/actions/admin";
+import { getAllProfiles, getCorbeilleElements } from "@/lib/actions/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { CorbeilleFiltre } from "@/lib/soft-delete";
 import type { AuditFields } from "@/lib/types";
 
 export const metadata = { title: "Administration — Facturation" };
@@ -14,8 +17,18 @@ async function getRecentActivity(): Promise<SuiviItem[]> {
   const supabase = await createClient();
 
   const [factures, produits] = await Promise.all([
-    supabase.from("factures").select("*").order("updated_at", { ascending: false }).limit(10),
-    supabase.from("produits").select("*").order("updated_at", { ascending: false }).limit(10),
+    supabase
+      .from("factures")
+      .select("*")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("produits")
+      .select("*")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(10),
   ]);
 
   const records: { type: string; label: string; href: string; record: AuditFields }[] = [];
@@ -53,10 +66,27 @@ async function getRecentActivity(): Promise<SuiviItem[]> {
   }));
 }
 
-export default async function AdminPage() {
+function parseCorbeilleFiltre(raw: string | undefined): CorbeilleFiltre {
+  if (raw === "supprimes" || raw === "tous") return raw;
+  return "actifs";
+}
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const admin = await requireAdmin();
-  const { data: profiles, error } = await getAllProfiles();
-  const activity = await getRecentActivity();
+  const sp = await searchParams;
+  const corbeilleFiltre = parseCorbeilleFiltre(
+    typeof sp.corbeille === "string" ? sp.corbeille : undefined
+  );
+
+  const [{ data: profiles, error }, activity, corbeilleRes] = await Promise.all([
+    getAllProfiles(),
+    getRecentActivity(),
+    getCorbeilleElements(corbeilleFiltre),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -71,6 +101,21 @@ export default async function AdminPage() {
       <section className="mb-10">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900">Utilisateurs</h2>
         <UsersManager profiles={profiles} currentUserId={admin.id} />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-900">Corbeille</h2>
+        <p className="mb-4 text-sm text-zinc-600">
+          Restaurez les factures, produits ou entreprises supprimés par erreur.
+        </p>
+        {corbeilleRes.error && (
+          <div className="mb-4">
+            <Alert variant="error">{corbeilleRes.error}</Alert>
+          </div>
+        )}
+        <Suspense fallback={<p className="text-zinc-500">Chargement…</p>}>
+          <AdminCorbeilleManager elements={corbeilleRes.data} filtre={corbeilleFiltre} />
+        </Suspense>
       </section>
 
       <section>

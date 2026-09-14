@@ -65,7 +65,7 @@ export function FacturesList({ factures, entreprises }: FacturesListProps) {
 
   const handleDelete = async (facture: Facture) => {
     const confirmed = window.confirm(
-      `Supprimer la facture ${facture.numero} ? Cette action est irréversible.`
+      `Supprimer la facture ${facture.numero} ?\n\nEn cas d'erreur, contactez l'administrateur pour la restaurer.`
     );
     if (!confirmed) return;
     setDeletingId(facture.id);

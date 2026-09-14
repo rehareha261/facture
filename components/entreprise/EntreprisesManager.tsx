@@ -29,7 +29,12 @@ export function EntreprisesManager({ entreprises }: EntreprisesManagerProps) {
   };
 
   const handleDelete = async (entreprise: Entreprise) => {
-    if (!window.confirm(`Supprimer « ${entreprise.nom} » ?`)) return;
+    if (
+      !window.confirm(
+        `Supprimer « ${entreprise.nom} » ?\n\nEn cas d'erreur, contactez l'administrateur pour la restaurer.`
+      )
+    )
+      return;
     setDeletingId(entreprise.id);
     setError(null);
     const result = await deleteEntreprise(entreprise.id);

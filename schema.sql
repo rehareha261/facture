@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS entreprise (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_by    UUID REFERENCES auth.users(id) ON DELETE SET NULL
+  updated_by    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  deleted_at    TIMESTAMPTZ
 );
 
 -- ------------------------------------------------------------
@@ -81,7 +82,8 @@ CREATE TABLE IF NOT EXISTS clients (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL
+  updated_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  deleted_at          TIMESTAMPTZ
 );
 
 -- ------------------------------------------------------------
@@ -95,7 +97,8 @@ CREATE TABLE IF NOT EXISTS produits (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by        UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_by        UUID REFERENCES auth.users(id) ON DELETE SET NULL
+  updated_by        UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  deleted_at        TIMESTAMPTZ
 );
 
 -- ------------------------------------------------------------
@@ -119,10 +122,15 @@ CREATE TABLE IF NOT EXISTS factures (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL
+  updated_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  deleted_at      TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_factures_entreprise_id ON factures(entreprise_id);
+CREATE INDEX IF NOT EXISTS idx_factures_deleted_at ON factures(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_produits_deleted_at ON produits(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_entreprise_deleted_at ON entreprise(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_clients_deleted_at ON clients(deleted_at) WHERE deleted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_factures_client_id ON factures(client_id);
 CREATE INDEX IF NOT EXISTS idx_factures_date_emission ON factures(date_emission DESC);
 CREATE INDEX IF NOT EXISTS idx_factures_numero ON factures(numero);

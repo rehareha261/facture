@@ -65,7 +65,8 @@ export async function deleteClient(id: string): Promise<ActionResult> {
   const { count, error: countError } = await supabase
     .from("factures")
     .select("*", { count: "exact", head: true })
-    .eq("client_id", id);
+    .eq("client_id", id)
+    .is("deleted_at", null);
 
   if (countError) return { success: false, error: getSupabaseErrorMessage(countError) };
 
@@ -77,7 +78,11 @@ export async function deleteClient(id: string): Promise<ActionResult> {
     };
   }
 
-  const { error } = await supabase.from("clients").delete().eq("id", id);
+  const { error } = await supabase
+    .from("clients")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
   revalidatePath("/clients");

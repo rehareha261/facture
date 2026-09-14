@@ -20,6 +20,7 @@ export default async function ClientsPage() {
   const { data, error } = await supabase
     .from("clients")
     .select("*")
+    .is("deleted_at", null)
     .order("nom", { ascending: true });
 
   if (error) {

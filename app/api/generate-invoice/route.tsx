@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       .eq("id", factureId)
       .single();
 
-    if (factureError || !facture) {
+    if (factureError || !facture || facture.deleted_at) {
       return NextResponse.json(
         { error: getSupabaseErrorMessage(factureError) ?? "Facture introuvable." },
         { status: 404 }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .eq("id", facture.entreprise_id)
       .single();
 
-    if (entError || !entreprise) {
+    if (entError || !entreprise || entreprise.deleted_at) {
       return NextResponse.json(
         { error: "Entreprise introuvable pour cette facture." },
         { status: 404 }

@@ -39,7 +39,7 @@ export default async function FactureDetailPage({ params }: PageProps<"/factures
     );
   }
 
-  if (!data) notFound();
+  if (!data || data.deleted_at) notFound();
 
   const facture = data as FactureComplete;
   let audit = undefined;

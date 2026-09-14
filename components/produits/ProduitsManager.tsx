@@ -30,7 +30,7 @@ export function ProduitsManager({ produits }: ProduitsManagerProps) {
 
   const handleDelete = async (produit: Produit) => {
     const confirmed = window.confirm(
-      `Supprimer « ${produit.designation} » ? Les factures existantes ne seront pas affectées.`
+      `Supprimer « ${produit.designation} » ?\n\nLes factures existantes ne seront pas affectées.\nEn cas d'erreur, contactez l'administrateur pour le restaurer.`
     );
     if (!confirmed) return;
 

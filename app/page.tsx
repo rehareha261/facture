@@ -14,10 +14,14 @@ export default async function DashboardPage() {
   const anneeCourante = new Date().getFullYear();
 
   const [facturesHistoriqueRes, lignesRes] = await Promise.all([
-    supabase.from("factures").select("date_emission, total_ht").gte("date_emission", "2023-01-01"),
+    supabase
+      .from("factures")
+      .select("date_emission, total_ht")
+      .is("deleted_at", null)
+      .gte("date_emission", "2023-01-01"),
     supabase
       .from("lignes_facture")
-      .select("quantite, produit_id, designation, factures!inner(date_emission)")
+      .select("quantite, produit_id, designation, factures!inner(date_emission, deleted_at)")
       .gte("factures.date_emission", "2023-01-01"),
   ]);
 
@@ -36,7 +40,15 @@ export default async function DashboardPage() {
 
   const facturesHistorique = (facturesHistoriqueRes.data ?? []) as Facture[];
 
-  const lignes: LigneVenteDashboard[] = (lignesRes.data ?? []).map((row) => {
+  const lignes: LigneVenteDashboard[] = (lignesRes.data ?? [])
+    .filter((row) => {
+      const facture = row.factures as
+        | { date_emission: string; deleted_at: string | null }
+        | { date_emission: string; deleted_at: string | null }[];
+      const f = Array.isArray(facture) ? facture[0] : facture;
+      return f && !f.deleted_at;
+    })
+    .map((row) => {
     const facture = row.factures as { date_emission: string } | { date_emission: string }[];
     const date_emission = Array.isArray(facture) ? facture[0]!.date_emission : facture.date_emission;
     return {

@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function NouvelleFacturePage() {
   const supabase = await createClient();
   const [produitsRes, numeroRes, entreprisesRes] = await Promise.all([
-    supabase.from("produits").select("*").order("designation"),
+    supabase.from("produits").select("*").is("deleted_at", null).order("designation"),
     genererNumeroFacture(),
     getEntreprises(),
   ]);

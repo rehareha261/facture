@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseErrorMessage } from "@/lib/supabase-utils";
+import { applyNotDeleted } from "@/lib/soft-delete";
 import type { ActionResult } from "@/lib/actions/clients";
 import type { Entreprise, EntrepriseFormData } from "@/lib/types";
 
@@ -22,10 +23,9 @@ export async function getEntreprises(): Promise<{
   error?: string;
 }> {
   const supabase = await createSupabaseClient();
-  const { data, error } = await supabase
-    .from("entreprise")
-    .select("*")
-    .order("nom");
+  const { data, error } = await applyNotDeleted(
+    supabase.from("entreprise").select("*").order("nom")
+  );
 
   if (error) return { data: [], error: getSupabaseErrorMessage(error) };
   return { data: (data ?? []) as Entreprise[] };
@@ -45,7 +45,9 @@ export async function getEntrepriseById(id: string): Promise<{
   error?: string;
 }> {
   const supabase = await createSupabaseClient();
-  const { data, error } = await supabase.from("entreprise").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await applyNotDeleted(
+    supabase.from("entreprise").select("*").eq("id", id)
+  ).maybeSingle();
 
   if (error) return { data: null, error: getSupabaseErrorMessage(error) };
   return { data: data as Entreprise | null };
@@ -87,10 +89,9 @@ export async function saveEntreprise(
 export async function deleteEntreprise(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
 
-  const { count, error: countErr } = await supabase
-    .from("factures")
-    .select("*", { count: "exact", head: true })
-    .eq("entreprise_id", id);
+  const { count, error: countErr } = await applyNotDeleted(
+    supabase.from("factures").select("*", { count: "exact", head: true }).eq("entreprise_id", id)
+  );
 
   if (countErr) return { success: false, error: getSupabaseErrorMessage(countErr) };
   if ((count ?? 0) > 0) {
@@ -100,7 +101,11 @@ export async function deleteEntreprise(id: string): Promise<ActionResult> {
     };
   }
 
-  const { error } = await supabase.from("entreprise").delete().eq("id", id);
+  const { error } = await supabase
+    .from("entreprise")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
   revalidatePaths();

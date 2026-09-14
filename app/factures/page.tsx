@@ -33,6 +33,7 @@ export default async function FacturesPage({
       let q = supabase
         .from("factures")
         .select("*", { count: "exact" })
+        .is("deleted_at", null)
         .order("date_emission", { ascending: false });
 
       if (numero) q = q.ilike("numero", `%${numero}%`);

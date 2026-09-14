@@ -12,6 +12,7 @@ export default async function ProduitsPage() {
   const { data, error } = await supabase
     .from("produits")
     .select("*")
+    .is("deleted_at", null)
     .order("designation", { ascending: true });
 
   if (error) {

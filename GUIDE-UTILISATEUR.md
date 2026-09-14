@@ -151,7 +151,7 @@ Le catalogue est **unique** : les mêmes produits sont disponibles quelle que so
 ### Modifier ou supprimer un produit
 
 - **Modifier** : change la désignation ou le prix. Les factures déjà émises ne sont pas modifiées.
-- **Supprimer** : retire le produit du catalogue. Les anciennes factures qui l’utilisaient restent intactes.
+- **Supprimer** : retire le produit du catalogue (récupérable par l’administrateur). Les anciennes factures qui l’utilisaient restent intactes.
 
 ### Importer des produits depuis un fichier CSV
 
@@ -325,7 +325,9 @@ Cliquez sur le **numéro de facture** pour voir le détail : dates, lignes, tota
 
 ### Supprimer une facture
 
-Sur la liste ou la page de détail, cliquez sur **Supprimer** et confirmez. **Cette action est définitive.**
+Sur la liste ou la page de détail, cliquez sur **Supprimer** et confirmez. La facture disparaît de vos listes, mais n’est pas effacée définitivement.
+
+> **Suppression accidentelle ?** Contactez l’administrateur, qui peut restaurer la facture depuis la page **Administration**.
 
 ---
 

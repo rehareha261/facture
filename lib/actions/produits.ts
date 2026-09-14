@@ -56,7 +56,11 @@ export async function updateProduit(id: string, data: ProduitFormData): Promise<
 
 export async function deleteProduit(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
-  const { error } = await supabase.from("produits").delete().eq("id", id);
+  const { error } = await supabase
+    .from("produits")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 

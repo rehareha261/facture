@@ -155,7 +155,11 @@ export async function createFacturesBatch(
 
 export async function deleteFacture(id: string): Promise<ActionResult> {
   const supabase = await createSupabaseClient();
-  const { error } = await supabase.from("factures").delete().eq("id", id);
+  const { error } = await supabase
+    .from("factures")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) return { success: false, error: getSupabaseErrorMessage(error) };
 
